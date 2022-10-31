@@ -1,0 +1,22 @@
+[project]
+name = "py-scripts"
+authors = [{name = "ahui", email = "102419@gmail.com"}]
+readme = "README.md"
+license = {file = "LICENSE"}
+classifiers = ["License :: OSI Approved :: MIT License"]
+dependencies = [
+    "appdirs",
+    "arrow",
+    "click",
+    "tomli",
+    "tomli-w",
+    "boto3",
+]
+requires-python = ">=3.10"
+dynamic = ["version", "description"]
+
+[project.urls]
+Home = "https://github.com/ahui2016/py-scripts"
+
+[project.scripts]
+tempbk = "tempbk:cli"

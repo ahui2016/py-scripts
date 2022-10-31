@@ -1,6 +1,6 @@
 import boto3
 
-from src.scripts import util, config
+from . import util, config
 
 """
 參考:
@@ -17,14 +17,14 @@ err_code 是 int, 小于零表示有错误, 大于等于零表示没有错误.
 当 err_code 大于等于零时, result 就是有效的数据.
 """
 
-Err1 = f"请打开 {config.app_config_file} 填写 Boto3_Config_File, 例:\n"
+Err1 = f"请打开 {config.app_config_file} 填写 boto3_config_file, 例:\n"
 Err2 = """
-Boto3_Config_File = '''/path/to/boto3-config.toml'''
+boto3_config_file = '''/path/to/boto3-config.toml'''
 
 然后自行创建 boto3-config.toml 文件(采用 utf-8 编码), 内容如下:
 
-endpoint_url = 'https://<accountid>.r2.cloudflarestorage.com',
-aws_access_key_id = '<access_key_id>',
+endpoint_url = 'https://<accountid>.r2.cloudflarestorage.com'
+aws_access_key_id = '<access_key_id>'
 aws_secret_access_key = '<access_key_secret>'
 
 其中 <accountid> 等尖括号的位置要填写正确的值.

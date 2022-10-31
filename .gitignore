@@ -1,2 +1,5 @@
 env
 .idea
+src/__pycache__/
+src/py_scripts.egg-info/
+src/scripts/__pycache__/

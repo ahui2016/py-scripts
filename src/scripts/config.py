@@ -2,7 +2,7 @@ from pathlib import Path
 from appdirs import AppDirs
 import tomli_w
 
-from . import util
+from src.scripts import util
 
 Config_Filename = "py-scripts-config.toml"
 

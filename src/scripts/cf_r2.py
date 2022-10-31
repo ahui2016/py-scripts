@@ -1,6 +1,6 @@
 import boto3
 
-from . import util, config
+from src.scripts import util, config
 
 """
 參考:
@@ -45,3 +45,4 @@ def get_boto3_cfg():
         return Err_Need_Config, -1
 
     return boto3_cfg, 1
+

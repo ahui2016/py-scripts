@@ -2,16 +2,21 @@
 
 import click
 
+from src.scripts import cf_r2
+
+
+def print_err(err):
+    print(f"Error: {err}")
 
 @click.group()
 @click.help_option("-h", "--help")
-@click.option(
-    "safe", "-s", "--safe-mode", is_flag=True, help="Safe mode: do not load recipes."
-)
-def cli(safe):
-    """ffe: File/Folder Extensible manipulator (可扩展的文件操作工具)
+@click.argument("file", nargs=1, type=click.Path(exists=True))
+@click.pass_context
+def cli(ctx, file):
+    """Temp Backup: 临时备份文件"""
 
-    https://pypi.org/project/ffe/
-    """
-    if not safe:
-        init_recipes(__recipes_folder__)
+    result, n = cf_r2.get_boto3_cfg()
+    if n < 0:
+        print_err(result)
+    else:
+        print(f"OK.\n{result}")

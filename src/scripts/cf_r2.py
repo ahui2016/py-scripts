@@ -1,3 +1,7 @@
+import os
+import sys
+import threading
+
 import boto3
 
 from . import util, config
@@ -21,11 +25,12 @@ Err1 = f"请打开 {config.app_config_file} 填写 boto3_config_file, 例:\n"
 Err2 = """
 boto3_config_file = '''/path/to/boto3-config.toml'''
 
-然后自行创建 boto3-config.toml 文件(采用 utf-8 编码), 内容如下:
+然后自行新建 boto3-config.toml 文件(采用 utf-8 编码), 内容如下:
 
 endpoint_url = 'https://<accountid>.r2.cloudflarestorage.com'
 aws_access_key_id = '<access_key_id>'
 aws_secret_access_key = '<access_key_secret>'
+bucket = '<bucket_name>'
 
 其中 <accountid> 等尖括号的位置要填写正确的值.
 """
@@ -40,7 +45,8 @@ def get_boto3_cfg(app_cfg):
     boto3_cfg = util.tomli_load(app_cfg[Boto3_Config_File])
     if "endpoint_url" not in boto3_cfg \
             or "aws_access_key_id" not in boto3_cfg \
-            or "aws_secret_access_key" not in boto3_cfg:
+            or "aws_secret_access_key" not in boto3_cfg \
+            or "bucket" not in boto3_cfg:
         return Err_Need_Config, -1
 
     return boto3_cfg, 1
@@ -53,3 +59,23 @@ def get_s3(boto3_cfg):
         aws_access_key_id = boto3_cfg["aws_access_key_id"],
         aws_secret_access_key = boto3_cfg["aws_secret_access_key"]
     )
+
+
+# https://boto3.amazonaws.com/v1/documentation/api/latest/guide/s3-uploading-files.html
+class ProgressPercentage(object):
+    def __init__(self, filename):
+        self._filename = filename
+        self._size = float(os.path.getsize(filename))
+        self._seen_so_far = 0
+        self._lock = threading.Lock()
+
+    def __call__(self, bytes_amount):
+        # To simplify, assume this is hooked up to a single filename
+        with self._lock:
+            self._seen_so_far += bytes_amount
+            percentage = (self._seen_so_far / self._size) * 100
+            sys.stdout.write(
+                "\r%s  %s / %s  (%.2f%%)" % (
+                    self._filename, self._seen_so_far, self._size,
+                    percentage))
+            sys.stdout.flush()

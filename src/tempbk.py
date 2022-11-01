@@ -6,6 +6,7 @@ from scripts import config, cf_r2
 # 初始化
 config.ensure_config_file()
 App_Config = config.get_config()
+boto3_cfg = None
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
@@ -24,9 +25,11 @@ def get_boto3_cfg(ctx):
 
 @click.group()
 @click.help_option("-h", "--help")
-def cli():
+@click.pass_context
+def cli(ctx):
     """Temp Backup: 临时备份文件"""
-    pass
+    global boto3_cfg
+    boto3_cfg = get_boto3_cfg(ctx)
 
 
 # 以上是主命令
@@ -40,17 +43,15 @@ def cli():
 def info(ctx):
     """Get information."""
     print(f"[tempbk config]\n{config.app_config_file}")
-    cfg = get_boto3_cfg(ctx)
     print(f"[boto3 config]\n{App_Config[cf_r2.Boto3_Config_File]}")
-    print(cfg)
+    print(boto3_cfg)
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 def buckets(ctx):
     """Get buckets."""
-    cfg = get_boto3_cfg(ctx)
-    s3 = cf_r2.get_s3(cfg)
+    s3 = cf_r2.get_s3(boto3_cfg)
     print('Buckets:')
     for bucket in s3.buckets.all():
         print(' - ', bucket.name)

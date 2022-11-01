@@ -32,9 +32,8 @@ aws_secret_access_key = '<access_key_secret>'
 Err_Need_Config = Err1 + Err2
 
 
-def get_boto3_cfg():
+def get_boto3_cfg(app_cfg):
     """:return: (result, err_code)"""
-    app_cfg = config.get_config()
     if Boto3_Config_File not in app_cfg:
         return Err_Need_Config, -1
 
@@ -46,3 +45,11 @@ def get_boto3_cfg():
 
     return boto3_cfg, 1
 
+
+def get_s3(boto3_cfg):
+    return boto3.resource(
+        's3',
+        endpoint_url = boto3_cfg["endpoint_url"],
+        aws_access_key_id = boto3_cfg["aws_access_key_id"],
+        aws_secret_access_key = boto3_cfg["aws_secret_access_key"]
+    )

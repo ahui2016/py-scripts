@@ -6,7 +6,7 @@ from scripts import config, cf_r2
 # 初始化
 config.ensure_config_file()
 App_Config = config.get_config()
-boto3_cfg = None
+boto3_cfg = {}
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
@@ -41,9 +41,10 @@ def cli(ctx):
 # @click.argument("file", nargs=1, type=click.Path(exists=True))
 @click.pass_context
 def info(ctx):
-    """Get information."""
-    print(f"[tempbk config]\n{config.app_config_file}")
-    print(f"[boto3 config]\n{App_Config[cf_r2.Boto3_Config_File]}")
+    """Show information."""
+    print(f"[tempbk]\n{__file__}\n")
+    print(f"[tempbk config]\n{config.app_config_file}\n")
+    print(f"[boto3 config]\n{App_Config[cf_r2.Boto3_Config_File]}\n")
     print(boto3_cfg)
 
 
@@ -55,6 +56,10 @@ def buckets(ctx):
     print('Buckets:')
     for bucket in s3.buckets.all():
         print(' - ', bucket.name)
+
+    s3_client = cf_r2.get_s3_client(boto3_cfg)
+    acl = s3_client.get_bucket_website(Bucket=boto3_cfg['bucket_name'])
+    print(acl)
 
 
 if __name__ == "__main__":

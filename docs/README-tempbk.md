@@ -67,7 +67,7 @@ $ conda activate py310
 
 ### 虚拟环境
 
-可以不适用虚拟环境, 但建议使用 miniconda 或 venv 创建虚拟环境.
+可以不适用虚拟环境, 但建议使用 miniconda 或 venv 创建虚拟环境.  
 
 ### 本地安装
 
@@ -77,9 +77,13 @@ $ conda activate py310
 python -m pip install -e .
 ```
 
-就完成了本地安装, 在此状态下, 你可以直接修改源代码, 一切修改都会立即生效.
+> (提示: 执行 `python -m pip uninstall .` 可以卸载)
 
-如果你在一个虚拟环境中进行本地安装, 则每次都需要进入该虚拟环境才能使用本软件.
+就完成了本地安装, 在此状态下, 你可以直接修改源代码, 一切修改都会立即生效.  
+(不需要重新安装)
+
+如果你在一个虚拟环境中进行本地安装, 则每次都需要进入该虚拟环境才能使用本软件.  
+(不需要重新安装)
 
 完成以上操作后, 执行命令 `tempbk info`, 会提示出错, 因为还需要进行配置,
 配置方法详见下一节.
@@ -114,7 +118,25 @@ bucket = '<bucket-name>'
 boto3_config_file = '''D:\ahui\Documents\program-settings\boto3-config.toml'''
 ```
 
-保存文件, 配置完成, 此时再执行 `tempbk info` 就不会出错了.
+保存文件, 配置完成, 此时再执行 `tempbk info`, 没有错误, 就说明可以开始正常使用了.
+
+
+## 参考
+
+### 上传文件
+
+- upload_file
+  - 通过 *指定文件路径* 来上传文件
+  - <https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Bucket.upload_file>
+- upload_fileobj
+  - 通过 *提供文件内容* 来上传文件
+  - <https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Bucket.upload_fileobj>
+
+
+- <https://boto3.amazonaws.com/v1/documentation/api/latest/guide/collections.html>
+- <https://boto3.amazonaws.com/v1/documentation/api/latest/reference/core/collections.html>
+- <https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html>
+
 
 
 <https://cryptography.io/en/latest/fernet/#using-passwords-with-fernet>

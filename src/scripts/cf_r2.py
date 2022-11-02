@@ -30,7 +30,7 @@ boto3_config_file = '''/path/to/boto3-config.toml'''
 endpoint_url = 'https://<accountid>.r2.cloudflarestorage.com'
 aws_access_key_id = '<access_key_id>'
 aws_secret_access_key = '<access_key_secret>'
-bucket = '<bucket_name>'
+bucket_name = '<bucket_name>'
 
 其中 <accountid> 等尖括号的位置要填写正确的值.
 """
@@ -46,7 +46,7 @@ def get_boto3_cfg(app_cfg):
     if "endpoint_url" not in boto3_cfg \
             or "aws_access_key_id" not in boto3_cfg \
             or "aws_secret_access_key" not in boto3_cfg \
-            or "bucket" not in boto3_cfg:
+            or "bucket_name" not in boto3_cfg:
         return Err_Need_Config, -1
 
     return boto3_cfg, 1
@@ -58,6 +58,22 @@ def get_s3(boto3_cfg):
         endpoint_url = boto3_cfg["endpoint_url"],
         aws_access_key_id = boto3_cfg["aws_access_key_id"],
         aws_secret_access_key = boto3_cfg["aws_secret_access_key"]
+    )
+
+
+def get_s3_client(boto3_cfg):
+    return boto3.client(
+        's3',
+        endpoint_url = boto3_cfg["endpoint_url"],
+        aws_access_key_id = boto3_cfg["aws_access_key_id"],
+        aws_secret_access_key = boto3_cfg["aws_secret_access_key"]
+    )
+
+
+def upload_file(filename, obj_name, boto3_cfg, s3_client):
+    s3_client.upload_file(
+        filename, boto3_cfg["bucket_name"], obj_name,
+        Callback=ProgressPercentage(filename)
     )
 
 

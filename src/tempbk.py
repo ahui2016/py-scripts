@@ -72,5 +72,14 @@ def upload(ctx, file):
     cf_r2.upload_file(Path(file), files_summary, the_bucket)
 
 
+@cli.command(context_settings=CONTEXT_SETTINGS, name="list")
+@click.argument("prefix", nargs=1, type=str)
+@click.pass_context
+def list_command(ctx, prefix):
+    """List files by prefix."""
+    files = cf_r2.get_file_list(prefix, the_bucket)
+    cf_r2.print_file_list(files)
+
+
 if __name__ == "__main__":
     cli(obj={})

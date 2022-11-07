@@ -121,6 +121,15 @@ def upload_file(filepath, files_summary, bucket):
     upload_files_summary(summary, bucket)
 
 
+def get_file_list(prefix, bucket):
+    return bucket.objects.filter(Prefix=prefix)
+
+
+def print_file_list(files):
+    for f in files:
+        print(f.key)
+
+
 # https://boto3.amazonaws.com/v1/documentation/api/latest/guide/s3-uploading-files.html
 class ProgressPercentage(object):
     def __init__(self, filename):

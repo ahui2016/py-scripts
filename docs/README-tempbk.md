@@ -14,7 +14,8 @@ Temp Backup: 临时备份文件
 
 1. 注册账户 <https://www.cloudflare.com/>
 2. 启用 R2 服务 <https://developers.cloudflare.com/r2/get-started/>  
-   内含 10GB 免费容量, 流量免费, 注册时需要信用卡或 PayPal
+   内含 10GB 免费容量, 流量免费, 注册时需要信用卡或 PayPal  
+   (注意: 上传下载等的操作次数超过上限也会产生费用, 详情以 Cloudflare 官方说明为准).
 3. 在 dashboard 进入 R2 页面，点击 Create bucket 创建一个数据桶。
    建议 bucket 的名称设为 `temp-backup`
 

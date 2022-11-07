@@ -2,10 +2,12 @@ import io
 import os
 import sys
 import threading
+from pathlib import Path
 
 import boto3
 import msgpack
 import tomli_w
+import arrow
 from botocore.exceptions import ClientError
 
 
@@ -82,10 +84,14 @@ def get_files_summary(bucket):
         if err.__str__().lower().find("not found") < 0:
             raise
         # 云端找不到 summary 文件, 因此新建.
-        data = msgpack.packb(default_summary)
-        bucket.upload_fileobj(io.BytesIO(data), Files_Summary_Name)
+        upload_files_summary(default_summary, bucket)
         summary = default_summary
     return summary
+
+
+def upload_files_summary(files_summary, bucket):
+    data = msgpack.packb(files_summary)
+    bucket.upload_fileobj(io.BytesIO(data), Files_Summary_Name)
 
 
 def get_file_obj(obj_name, bucket):
@@ -94,10 +100,25 @@ def get_file_obj(obj_name, bucket):
     return data
 
 
-def upload_file(filename, obj_name, bucket):
+def update_files_summary(obj_name, files_summary):
+    month = obj_name[:6]
+    n = files_summary.get(month, 0)
+    files_summary[month] = n + 1
+    return files_summary
+
+
+def add_prefix(filepath: Path):
+    return f"{arrow.now().format('YYYYMMDD')}/{filepath.name}"
+
+
+def upload_file(filepath, files_summary, bucket):
+    obj_name = add_prefix(filepath)
+    filepath_str = str(filepath)
     bucket.upload_file(
-        filename, obj_name, Callback=ProgressPercentage(filename)
+        filepath_str, obj_name, Callback=ProgressPercentage(filepath_str)
     )
+    summary = update_files_summary(obj_name, files_summary)
+    upload_files_summary(summary, bucket)
 
 
 # https://boto3.amazonaws.com/v1/documentation/api/latest/guide/s3-uploading-files.html

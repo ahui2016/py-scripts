@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any
 
 import click
@@ -14,6 +15,7 @@ boto3_cfg: dict
 s3: Any
 s3_client: Any
 the_bucket: Any
+files_summary: dict
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
@@ -27,11 +29,12 @@ def print_err(err):
 @click.pass_context
 def cli(ctx):
     """Temp Backup: 临时备份文件"""
-    global boto3_cfg, s3, s3_client, the_bucket
+    global boto3_cfg, s3, s3_client, the_bucket, files_summary
     boto3_cfg = cf_r2.get_boto3_cfg()
     s3 = cf_r2.get_s3(boto3_cfg)
     s3_client = cf_r2.get_s3_client(boto3_cfg)
     the_bucket = cf_r2.get_bucket(s3, boto3_cfg)
+    files_summary = cf_r2.get_files_summary(the_bucket)
 
 
 # 以上是主命令
@@ -52,14 +55,21 @@ def info(ctx):
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
 @click.pass_context
-def buckets(ctx):
-    """Get buckets."""
+def count(ctx):
+    """Count files uploaded."""
     print('Buckets:')
     for bucket in s3.buckets.all():
         print(' - ', bucket.name)
 
-    summary = cf_r2.get_files_summary(the_bucket)
-    print(summary)
+    print(files_summary)
+
+
+@cli.command(context_settings=CONTEXT_SETTINGS)
+@click.argument("file", nargs=1, type=click.Path(exists=True))
+@click.pass_context
+def upload(ctx, file):
+    """Upload a file."""
+    cf_r2.upload_file(Path(file), files_summary, the_bucket)
 
 
 if __name__ == "__main__":

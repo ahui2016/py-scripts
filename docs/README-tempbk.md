@@ -108,6 +108,14 @@ bucket = '<bucket-name>'
 填写正确的值后保存文件, 配置完成, 可以开始正常使用.
 
 
+## msgpack
+
+由于 s3 的 upload_fileobj 函数只能上传 bytes-like 对象,
+而 json 又只能输出 str 或 StringIO, 两者很难匹配.
+
+因此有些地方 (比如 `get_files_summary()`) 为了方便就用了
+[msgpack](https://github.com/msgpack/msgpack-python).
+
 ## 参考
 
 ### 上传文件

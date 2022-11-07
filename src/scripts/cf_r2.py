@@ -1,11 +1,13 @@
 import io
-import json
 import os
 import sys
 import threading
 
 import boto3
+import msgpack
 import tomli_w
+from botocore.exceptions import ClientError
+
 
 from . import util, config
 
@@ -22,10 +24,11 @@ err_code 是 int, 小于零表示有错误, 大于等于零表示没有错误.
 当 err_code 大于等于零时, result 就是有效的数据.
 """
 
-Files_Summary_Name = "files-summary.json"
+Files_Summary_Name = "files-summary.msgp"
 """
 dict[str, int]  # 日期(年月)与文件数量 '202201': 5
 """
+default_summary = {}
 
 Boto3_Config_Filename = "boto3_config.toml"
 boto3_config_file = config.app_config_dir.joinpath(Boto3_Config_Filename)
@@ -72,8 +75,17 @@ def get_s3_client(boto3_cfg):
 
 
 def get_files_summary(bucket):
-    data = get_file_obj(Files_Summary_Name, bucket)
-    return json.loads(data.read())
+    try:
+        data = get_file_obj(Files_Summary_Name, bucket)
+        summary = msgpack.unpackb(data.getvalue())
+    except ClientError as err:
+        if err.__str__().lower().find("not found") < 0:
+            raise
+        # 云端找不到 summary 文件, 因此新建.
+        data = msgpack.packb(default_summary)
+        bucket.upload_fileobj(io.BytesIO(data), Files_Summary_Name)
+        summary = default_summary
+    return summary
 
 
 def get_file_obj(obj_name, bucket):

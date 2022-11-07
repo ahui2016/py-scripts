@@ -58,8 +58,8 @@ def buckets(ctx):
     for bucket in s3.buckets.all():
         print(' - ', bucket.name)
 
-    acl = s3_client.get_bucket_website(Bucket=boto3_cfg['bucket_name'])
-    print(acl)
+    summary = cf_r2.get_files_summary(the_bucket)
+    print(summary)
 
 
 if __name__ == "__main__":

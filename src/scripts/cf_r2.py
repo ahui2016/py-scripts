@@ -101,33 +101,90 @@ def get_file_obj(obj_name, bucket):
 
 
 def update_files_summary(obj_name, files_summary):
+    """上传文件时, 统计数字加一."""
     month = obj_name[:6]
     n = files_summary.get(month, 0)
     files_summary[month] = n + 1
     return files_summary
 
 
+def minus_files_summary(deleted, files_summary):
+    """删除文件时, 根据删除结果更新统计数字."""
+    for obj in deleted:
+        month = obj['Key'][:6]
+        n = files_summary.get(month, 0)
+        files_summary[month] = n - 1
+        if (n <= 0) and (month in files_summary):
+            del files_summary[month]
+    return files_summary
+
+
+def print_deleted(deleted):
+    print("\nDeleted:\n")
+    for obj in deleted:
+        print(obj['Key'])
+
+
+def today():
+    return arrow.now().format('YYYYMMDD')
+
+
 def add_prefix(filepath: Path):
-    return f"{arrow.now().format('YYYYMMDD')}/{filepath.name}"
+    return f"{today()}/{filepath.name}"
 
 
 def upload_file(filepath, files_summary, bucket):
     obj_name = add_prefix(filepath)
+    exists = obj_exists(obj_name, bucket)
     filepath_str = str(filepath)
     bucket.upload_file(
         filepath_str, obj_name, Callback=ProgressPercentage(filepath_str)
     )
-    summary = update_files_summary(obj_name, files_summary)
-    upload_files_summary(summary, bucket)
+    if not exists:
+        summary = update_files_summary(obj_name, files_summary)
+        upload_files_summary(summary, bucket)
+
+
+def obj_exists(obj_name, bucket):
+    files = get_file_list(obj_name, bucket)
+    for obj in files:
+        if obj.key == obj_name:
+            return True
+    return False
 
 
 def get_file_list(prefix, bucket):
+    if prefix == "today":
+        prefix = today()
     return bucket.objects.filter(Prefix=prefix)
 
 
 def print_file_list(files):
+    i = 0
     for f in files:
         print(f.key)
+        i += 1
+    return i
+
+
+def get_object_list(files):
+    objects = []
+    for f in files:
+        objects.append(dict(Key=f.key))
+    return objects
+
+
+def delete_objects(objects, files_summary, bucket):
+    resp = bucket.delete_objects(
+        Delete={'Objects': objects}
+    )
+    deleted = resp['Deleted']
+    summary = minus_files_summary(deleted, files_summary)
+    upload_files_summary(summary, bucket)
+    if len(objects) != len(deleted):
+        print_deleted(deleted)
+    if 'Errors' in resp:
+        print(resp['Errors'])
 
 
 # https://boto3.amazonaws.com/v1/documentation/api/latest/guide/s3-uploading-files.html

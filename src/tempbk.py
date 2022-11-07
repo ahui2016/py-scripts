@@ -35,6 +35,7 @@ def cli(ctx):
     s3_client = cf_r2.get_s3_client(boto3_cfg)
     the_bucket = cf_r2.get_bucket(s3, boto3_cfg)
     files_summary = cf_r2.get_files_summary(the_bucket)
+    print()
 
 
 # 以上是主命令
@@ -50,18 +51,14 @@ def info(ctx):
     print(f"[tempbk]\n{__file__}\n")
     print(f"[tempbk config]\n{config.app_config_file}\n")
     print(f"[boto3 config]\n{cf_r2.boto3_config_file}\n")
-    print(boto3_cfg)
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 def count(ctx):
     """Count files uploaded."""
-    print('Buckets:')
-    for bucket in s3.buckets.all():
-        print(' - ', bucket.name)
-
     print(files_summary)
+    print()
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
@@ -70,15 +67,54 @@ def count(ctx):
 def upload(ctx, file):
     """Upload a file."""
     cf_r2.upload_file(Path(file), files_summary, the_bucket)
+    print()
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS, name="list")
 @click.argument("prefix", nargs=1, type=str)
 @click.pass_context
 def list_command(ctx, prefix):
-    """List files by prefix."""
+    """List files by prefix.
+
+    通过前缀查找文件, 例如:
+
+    tempbk list 202211 (列出2022年11月的全部文件)
+
+    tempbk list 2022   (列出2022年的全部文件)
+
+    tempbk list today  (列出今天的全部文件)
+    """
     files = cf_r2.get_file_list(prefix, the_bucket)
+    i = cf_r2.print_file_list(files)
+    if i == 0:
+        print(f"Not Found: {prefix}")
+    print()
+
+
+@cli.command(context_settings=CONTEXT_SETTINGS)
+@click.argument("prefix", nargs=1, type=str)
+@click.pass_context
+def delete(ctx, prefix):
+    """Delete files by prefix.
+
+    删除指定前缀的云端文件(必须包含日期前缀), 例如:
+
+    tempbk delete 20221111/abc.txt (删除2022年11月11日名为abc.txt的文件)
+
+    tempbk delete 202211           (删除2022年11月的全部文件)
+    """
+    files = cf_r2.get_file_list(prefix, the_bucket)
+    objects = cf_r2.get_object_list(files)
+    length = len(objects)
+    if length == 0:
+        print(f"Not Found: {prefix}")
+        print("(注意, 必须以日期前缀开头, 并且文件名区分大小写)")
+        ctx.exit()
+
     cf_r2.print_file_list(files)
+    click.confirm(f"\nDelete {length} files? (确认删除云端文件)", abort=True)
+    cf_r2.delete_objects(objects, files_summary, the_bucket)
+    print()
 
 
 if __name__ == "__main__":

@@ -85,15 +85,15 @@ python -m pip install -e .
 如果你在一个虚拟环境中进行本地安装, 则每次都需要进入该虚拟环境才能使用本软件.  
 (不需要重新安装)
 
-完成以上操作后, 执行命令 `tempbk info`, 会提示出错, 因为还需要进行配置,
-配置方法详见下一节.
+完成以上操作后, 执行命令 `tempbk info`, 可以看到配置文件的具体位置,
+接下来需要打开配置文件填写信息, 详见下一节.
 
 ### 配置
 
 ### 新建配置文件
 
-请在任意文件夹（你自己决定在哪个文件夹）新建 `boto3-config.toml` 文件
-(采用 utf-8 编码), 内容如下:
+执行命令 `tempbk info`, 可以看到 `[boto3 config]` 的具体位置,
+请使用文本编辑器打开 `boto3-config.toml` 文件, 可以看到内容如下:
 
 ```toml
 endpoint_url = 'https://<accountid>.r2.cloudflarestorage.com'
@@ -103,22 +103,9 @@ bucket = '<bucket-name>'
 ```
 
 其中 `<accountid>` 等尖括号的位置要填写正确的值, 一共有 4 个值需要填写,
-这四个值都可以在上文 `准备工作` 部分找到.
+这四个值都可以在上文 `准备工作` 部分找到. (填写时, 不要保留尖括号.)
 
-### 填写配置文件的位置
-
-执行命令 `tempbk info`, 可以看到出错信息, 其中提示了 `py-scripts-config.toml`
-的位置, 请用文本编辑器打开该文件, 在文件末尾添加一行:
-`boto3_config_file = '''/path/to/boto3-config.toml'''`
-
-其中 `/path/to/boto3-config.toml` 改成上一步新建的 `boto3-config.toml`
-文件的实际位置. 例如, 我自己填写的是
-
-```toml
-boto3_config_file = '''D:\ahui\Documents\program-settings\boto3-config.toml'''
-```
-
-保存文件, 配置完成, 此时再执行 `tempbk info`, 没有错误, 就说明可以开始正常使用了.
+填写正确的值后保存文件, 配置完成, 可以开始正常使用.
 
 
 ## 参考

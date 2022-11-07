@@ -1,8 +1,11 @@
+import io
+import json
 import os
 import sys
 import threading
 
 import boto3
+import tomli_w
 
 from . import util, config
 
@@ -10,8 +13,6 @@ from . import util, config
 參考:
 https://developers.cloudflare.com/r2/examples/boto3/
 """
-
-Boto3_Config_File = "boto3_config_file"
 
 """
 【关于返回值】
@@ -21,35 +22,35 @@ err_code 是 int, 小于零表示有错误, 大于等于零表示没有错误.
 当 err_code 大于等于零时, result 就是有效的数据.
 """
 
-Err1 = f"请打开 {config.app_config_file} 填写 boto3_config_file, 例:\n"
-Err2 = """
-boto3_config_file = '''/path/to/boto3-config.toml'''
-
-然后自行新建 boto3-config.toml 文件(采用 utf-8 编码), 内容如下:
-
-endpoint_url = 'https://<accountid>.r2.cloudflarestorage.com'
-aws_access_key_id = '<access_key_id>'
-aws_secret_access_key = '<access_key_secret>'
-bucket_name = '<bucket_name>'
-
-其中 <accountid> 等尖括号的位置要填写正确的值.
+Files_Summary_Name = "files-summary.json"
 """
-Err_Need_Config = Err1 + Err2
+dict[str, int]  # 日期(年月)与文件数量 '202201': 5
+"""
+
+Boto3_Config_Filename = "boto3_config.toml"
+boto3_config_file = config.app_config_dir.joinpath(Boto3_Config_Filename)
+
+def default_config():
+    return dict(
+        endpoint_url          ='https://<accountid>.r2.cloudflarestorage.com',
+        aws_access_key_id     = '<access_key_id>',
+        aws_secret_access_key = '<access_key_secret>',
+        bucket_name           = '<bucket_name>'
+    )
 
 
-def get_boto3_cfg(app_cfg):
-    """:return: (result, err_code)"""
-    if Boto3_Config_File not in app_cfg:
-        return Err_Need_Config, -1
+def ensure_config_file() -> None:
+    if not boto3_config_file.exists():
+        with open(boto3_config_file, "wb") as f:
+            tomli_w.dump(default_config(), f)
 
-    boto3_cfg = util.tomli_load(app_cfg[Boto3_Config_File])
-    if "endpoint_url" not in boto3_cfg \
-            or "aws_access_key_id" not in boto3_cfg \
-            or "aws_secret_access_key" not in boto3_cfg \
-            or "bucket_name" not in boto3_cfg:
-        return Err_Need_Config, -1
 
-    return boto3_cfg, 1
+def get_boto3_cfg():
+    return util.tomli_load(boto3_config_file)
+
+
+def get_bucket(s3, boto3_cfg):
+    return s3.Bucket(boto3_cfg["bucket_name"])
 
 
 def get_s3(boto3_cfg):
@@ -70,10 +71,20 @@ def get_s3_client(boto3_cfg):
     )
 
 
-def upload_file(filename, obj_name, boto3_cfg, s3_client):
-    s3_client.upload_file(
-        filename, boto3_cfg["bucket_name"], obj_name,
-        Callback=ProgressPercentage(filename)
+def get_files_summary(bucket):
+    data = get_file_obj(Files_Summary_Name, bucket)
+    return json.loads(data.read())
+
+
+def get_file_obj(obj_name, bucket):
+    data = io.BytesIO()
+    bucket.download_fileobj(obj_name, data)
+    return data
+
+
+def upload_file(filename, obj_name, bucket):
+    bucket.upload_file(
+        filename, obj_name, Callback=ProgressPercentage(filename)
     )
 
 

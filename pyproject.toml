@@ -12,6 +12,7 @@ dependencies = [
     "tomli-w",
     "boto3",
     "msgpack",
+    "humanfriendly",
 ]
 requires-python = ">=3.10"
 dynamic = ["version", "description"]

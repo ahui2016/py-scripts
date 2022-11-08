@@ -143,9 +143,21 @@ def minus_summary(deleted, summary):
         month = obj['Key'][:6]
         n = summary.get(month, 0)
         summary[month] = n - 1
-        if (n <= 0) and (month in summary):
+
+        if summary[month] <= 0:
             del summary[month]
+
     return summary
+
+
+def print_summary(summary:dict):
+    if len(summary) == 0:
+        print("云端文件数量: 零")
+        return
+
+    for month, n in summary.items():
+        month_year = arrow.get(month, 'YYYYMM').format('MMM-YYYY')
+        print(f"{month_year}: {n}")
 
 
 def print_deleted(deleted):

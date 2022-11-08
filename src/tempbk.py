@@ -27,7 +27,12 @@ def print_err(err):
 @click.help_option("-h", "--help")
 @click.pass_context
 def cli(ctx):
-    """Temp Backup: 临时备份文件"""
+    """Temp Backup: 臨時備份文件
+
+    詳細使用方法看這裡:
+
+    https://github.com/ahui2016/py-scripts/blob/main/docs/README-tempbk.md
+    """
     global boto3_cfg, s3, s3_client, the_bucket
     boto3_cfg = cf_r2.get_boto3_cfg()
     s3 = cf_r2.get_s3(boto3_cfg)
@@ -60,7 +65,7 @@ def count(ctx):
     """Count files uploaded."""
     objects_summary = cf_r2.get_summary(the_bucket)
     # objects_summary 会发生网络请求, 因此不能放在程序初始化里.
-    print(objects_summary)
+    cf_r2.print_summary(objects_summary)
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)

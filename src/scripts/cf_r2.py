@@ -43,7 +43,8 @@ def default_config():
         endpoint_url          ='https://<accountid>.r2.cloudflarestorage.com',
         aws_access_key_id     = '<access_key_id>',
         aws_secret_access_key = '<access_key_secret>',
-        bucket_name           = '<bucket_name>'
+        bucket_name           = '<bucket_name>',
+        download_dir          = '',
     )
 
 
@@ -86,6 +87,7 @@ def get_s3_client(boto3_cfg):
 def set_download_dir(dir_path:str, boto3_cfg):
     boto3_cfg[Download_Dir] = dir_path
     write_boto3_cfg(boto3_cfg)
+    print(f"设置成功, 下载文件默认保存至 {dir_path}")
 
 
 def get_download_dir(boto3_cfg):
@@ -96,10 +98,11 @@ def check_download_dir(boto3_cfg):
     """
     :return: err: str
     """
-    if Download_Dir in boto3_cfg and len(boto3_cfg[Download_Dir]) > 0:
-        return ""
-    return "请先设置文件夹用于保存下载文件, 例如:\n" \
-        "tempbk download -dir /path/to/folder"
+    dl_dir = boto3_cfg.get(Download_Dir, "")
+    if not dl_dir:
+        return "请先设置文件夹用于保存下载文件, 例如:\n" \
+            "tempbk download -dir /path/to/folder"
+    return ""
 
 
 def get_summary(bucket):
@@ -241,8 +244,9 @@ def get_download_filepath(obj_name:str, folder:Path, filepath:Path):
 
 
 def download_file(bucket, obj_name, size, filepath):
+    print(f"Download {obj_name} to {filepath}")
     bucket.download_file(
-        obj_name, filepath, Callback=DownloadProgress(obj_name, size)
+        obj_name, str(filepath), Callback=DownloadProgress(obj_name, size)
     )
 
 

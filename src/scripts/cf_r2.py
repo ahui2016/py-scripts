@@ -1,15 +1,13 @@
-import io
+import json
 import os
 import sys
 import threading
 from pathlib import Path
 
 import boto3
-import msgpack
 import tomli_w
 import arrow
 from humanfriendly import format_size
-from botocore.exceptions import ClientError
 
 
 from . import util, config
@@ -28,7 +26,7 @@ err 是 str, 有内容表示有错误, 空字符串表示没错误.
 为了便于区分, 在代码中将本地文件称为 file, 云端文件称为 object.
 """
 
-Objects_Summary_Name = "objects-summary.msgp"
+Objects_Summary = "objects_summary"
 """
 dict[str, int]  # 日期(年月)与文件数量 '202201': 5
 """
@@ -105,28 +103,17 @@ def check_download_dir(boto3_cfg):
     return ""
 
 
-def get_summary(bucket):
-    try:
-        data = get_obj_data(Objects_Summary_Name, bucket)
-        summary = msgpack.unpackb(data.getvalue())
-    except ClientError as err:
-        if err.__str__().lower().find("not found") < 0:
-            raise
-        # 云端找不到 summary 文件, 因此新建.
-        upload_summary(default_summary, bucket)
-        summary = default_summary
-    return summary
+def get_summary(boto3_cfg):
+    if Objects_Summary not in boto3_cfg:
+        write_summary(default_summary, boto3_cfg)
+        return default_summary
+
+    return json.loads(boto3_cfg[Objects_Summary])
 
 
-def upload_summary(summary, bucket):
-    data = msgpack.packb(summary)
-    bucket.upload_fileobj(io.BytesIO(data), Objects_Summary_Name)
-
-
-def get_obj_data(obj_name, bucket):
-    data = io.BytesIO()
-    bucket.download_fileobj(obj_name, data)
-    return data
+def write_summary(summary:dict, boto3_cfg):
+    boto3_cfg[Objects_Summary] = json.dumps(summary)
+    write_boto3_cfg(boto3_cfg)
 
 
 def update_summary(obj_name, summary):
@@ -174,7 +161,7 @@ def add_prefix(filepath: Path):
     return f"{today()}/{filepath.name}"
 
 
-def upload_file(filepath, summary, bucket):
+def upload_file(filepath, summary, boto3_cfg, bucket):
     obj_name = add_prefix(filepath)
     exists = obj_exists(obj_name, bucket)
     filepath_str = str(filepath)
@@ -183,7 +170,7 @@ def upload_file(filepath, summary, bucket):
     )
     if not exists:
         summary = update_summary(obj_name, summary)
-        upload_summary(summary, bucket)
+        write_summary(summary, boto3_cfg)
 
 
 def obj_exists(obj_name, bucket):
@@ -229,13 +216,13 @@ def print_objects_key(objects):
     return i
 
 
-def delete_objects(objects, summary, bucket):
+def delete_objects(objects, summary, boto3_cfg, bucket):
     resp = bucket.delete_objects(
         Delete={'Objects': objects}
     )
     deleted = resp['Deleted']
     summary = minus_summary(deleted, summary)
-    upload_summary(summary, bucket)
+    write_summary(summary, boto3_cfg)
     if len(objects) != len(deleted):
         print_deleted(deleted)
     if 'Errors' in resp:

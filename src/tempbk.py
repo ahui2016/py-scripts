@@ -12,6 +12,7 @@ cf_r2.ensure_config_file()
 
 App_Config = config.get_config()
 boto3_cfg: dict
+objects_summary: dict
 s3: Any
 s3_client: Any
 the_bucket: Any
@@ -25,19 +26,19 @@ def print_err(err):
 
 @click.group()
 @click.help_option("-h", "--help")
-@click.pass_context
-def cli(ctx):
+def cli():
     """Temp Backup: 臨時備份文件
 
     詳細使用方法看這裡:
 
     https://github.com/ahui2016/py-scripts/blob/main/docs/README-tempbk.md
     """
-    global boto3_cfg, s3, s3_client, the_bucket
+    global boto3_cfg, s3, s3_client, the_bucket, objects_summary
     boto3_cfg = cf_r2.get_boto3_cfg()
     s3 = cf_r2.get_s3(boto3_cfg)
     s3_client = cf_r2.get_s3_client(boto3_cfg)
     the_bucket = cf_r2.get_bucket(s3, boto3_cfg)
+    objects_summary = cf_r2.get_summary(boto3_cfg)
 
 
 # 以上是主命令
@@ -46,8 +47,7 @@ def cli(ctx):
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
-@click.pass_context
-def info(ctx):
+def info():
     """Show information."""
     print()
     print(f"[tempbk]\n{__file__}\n")
@@ -60,32 +60,25 @@ def info(ctx):
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
-@click.pass_context
-def count(ctx):
+def count():
     """Count files uploaded."""
-    objects_summary = cf_r2.get_summary(the_bucket)
-    # objects_summary 会发生网络请求, 因此不能放在程序初始化里.
     cf_r2.print_summary(objects_summary)
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("file", nargs=1, type=click.Path(exists=True))
-@click.pass_context
-def upload(ctx, file):
+def upload(file):
     """Upload a file.
 
     上传文件. 注意, 如果云端有同名文件, 同一天内的会直接覆盖,
     非同一天的同名文件会在云端产生不同的文件 (日期前缀不同).
     """
-    objects_summary = cf_r2.get_summary(the_bucket)
-    # objects_summary 会发生网络请求, 因此不能放在程序初始化里.
-    cf_r2.upload_file(Path(file), objects_summary, the_bucket)
+    cf_r2.upload_file(Path(file), objects_summary, boto3_cfg, the_bucket)
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS, name="list")
 @click.argument("prefix", nargs=1, type=str)
-@click.pass_context
-def list_command(ctx, prefix):
+def list_command(prefix):
     """List objects by prefix.
 
     通过前缀查找云端文件, 例如:
@@ -124,8 +117,7 @@ def delete(ctx, prefix):
 
     cf_r2.print_objects_key(objects)
     click.confirm(f"\nDelete {length} objects? (确认删除云端文件)", abort=True)
-    objects_summary = cf_r2.get_summary(the_bucket)
-    cf_r2.delete_objects(obj_del_list, objects_summary, the_bucket)
+    cf_r2.delete_objects(obj_del_list, objects_summary, boto3_cfg, the_bucket)
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)

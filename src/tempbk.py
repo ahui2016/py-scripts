@@ -47,8 +47,24 @@ def cli():
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
-def info():
-    """Show information."""
+@click.option(
+    "size_limit",
+    "--set-size",
+    type=int,
+    help="Set upload size limit (unit: MB).",
+)
+@click.pass_context
+def info(ctx, size_limit):
+    """Show or set information.
+
+    Example:
+
+    tempbk info --set-size 25 (设置上传文件体积上限, 单位: MB)
+    """
+    if size_limit:
+        cf_r2.set_size_limit(size_limit, boto3_cfg)
+        ctx.exit()
+
     print()
     print(f"[tempbk]\n{__file__}\n")
     print(f"[tempbk config]\n{config.app_config_file}\n")
@@ -57,6 +73,7 @@ def info():
     if not dl_dir:
         dl_dir = "(未设置下载文件夹, 设置方法请查看帮助: tempbk download -h)"
     print(f"[download dir]\n{dl_dir}\n")
+    print(f"[upload size limit] {boto3_cfg[cf_r2.Upload_Size_Limit]} MB")
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
@@ -73,7 +90,9 @@ def upload(file):
     上传文件. 注意, 如果云端有同名文件, 同一天内的会直接覆盖,
     非同一天的同名文件会在云端产生不同的文件 (日期前缀不同).
     """
-    cf_r2.upload_file(Path(file), objects_summary, boto3_cfg, the_bucket)
+    if err := cf_r2.upload_file(
+            Path(file), objects_summary, boto3_cfg, the_bucket):
+        print_err(err)
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS, name="list")

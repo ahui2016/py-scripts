@@ -9,8 +9,9 @@ import tomli_w
 import arrow
 from humanfriendly import format_size
 
-
 from . import util, config
+from .util import MB
+
 
 """
 參考:
@@ -33,6 +34,7 @@ dict[str, int]  # 日期(年月)与文件数量 '202201': 5
 default_summary = {}
 
 Download_Dir = "download_dir"
+Upload_Size_Limit = "upload_size_limit"
 Boto3_Config_Filename = "boto3_config.toml"
 boto3_config_file = config.app_config_dir.joinpath(Boto3_Config_Filename)
 
@@ -43,6 +45,7 @@ def default_config():
         aws_secret_access_key = '<access_key_secret>',
         bucket_name           = '<bucket_name>',
         download_dir          = '',
+        upload_size_limit     = 50 * MB
     )
 
 
@@ -80,6 +83,16 @@ def get_s3_client(boto3_cfg):
         aws_access_key_id = boto3_cfg["aws_access_key_id"],
         aws_secret_access_key = boto3_cfg["aws_secret_access_key"]
     )
+
+
+def set_size_limit(limit, boto3_cfg):
+    boto3_cfg[Upload_Size_Limit] = limit
+    write_boto3_cfg(boto3_cfg)
+    print(f"设置成功, 上传文件大小上限: {limit} MB")
+
+
+def get_size_limit(boto3_cfg):
+    return boto3_cfg[Upload_Size_Limit] * MB
 
 
 def set_download_dir(dir_path:str, boto3_cfg):
@@ -161,7 +174,24 @@ def add_prefix(filepath: Path):
     return f"{today()}/{filepath.name}"
 
 
+def check_file_size(file:Path, boto3_cfg):
+    """
+    :return: err: str
+    """
+    filesize = file.lstat().st_size
+    sizelimit = get_size_limit(boto3_cfg)
+    if filesize > sizelimit:
+        return f"文件体积({format_size(filesize)}) 超过上限({boto3_cfg[Upload_Size_Limit]}MB)"
+    return ""
+
+
 def upload_file(filepath, summary, boto3_cfg, bucket):
+    """
+    :return: err: str
+    """
+    if err := check_file_size(filepath, boto3_cfg):
+        return err
+
     obj_name = add_prefix(filepath)
     exists = obj_exists(obj_name, bucket)
     filepath_str = str(filepath)
@@ -171,6 +201,15 @@ def upload_file(filepath, summary, boto3_cfg, bucket):
     if not exists:
         summary = update_summary(obj_name, summary)
         write_summary(summary, boto3_cfg)
+
+    return ""
+
+
+def get_new_files(folder:Path):
+    files = folder.glob("*")
+    files = [x for x in files if x.is_file()]
+    files.sort(key=lambda x: x.lstat().st_mtime, reverse=True)
+    return files[0]
 
 
 def obj_exists(obj_name, bucket):

@@ -1,6 +1,8 @@
 import tomli
 
 
+MB = 1024 * 1024
+
 def tomli_load(file) -> dict:
     """正确处理 utf-16"""
     with open(file, "rb") as f:

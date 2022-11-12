@@ -26,8 +26,7 @@ def get_config():
     return util.tomli_load(app_config_file)
 
 
-def get_proxies():
-    cfg = get_config()
+def get_proxies(cfg):
     proxies = None
     if cfg["use_proxy"] and cfg["http_proxy"]:
         proxies = dict(

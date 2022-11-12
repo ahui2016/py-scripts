@@ -1,6 +1,6 @@
 # tempbk.py
 
-Temp Backup: 临时备份文件
+Temp Backup: 临时备份文件到 Cloudflare R2
 
 - 本软件通过终端输入命令上传文件到 Cloudflare R2 进行临时(短期)备份.
 - 上传前会自动加密, 下载后会自动解密

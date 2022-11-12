@@ -3,15 +3,14 @@ from typing import Any
 
 import click
 
-from scripts import config, cf_r2, util
+from scripts import cf_r2, util
+from scripts.tempbk_config import config_file, default_config, default_summary
 
 
 # 初始化
 VERSION = "2022-11-12"
-config.ensure_config_file()
-cf_r2.ensure_config_file()
+cf_r2.ensure_config_file(config_file, default_config())
 
-App_Config = config.get_config()
 boto3_cfg: dict
 objects_summary: dict
 s3: Any
@@ -34,10 +33,10 @@ def cli():
     https://github.com/ahui2016/py-scripts/blob/main/docs/README-tempbk.md
     """
     global boto3_cfg, s3, the_bucket, objects_summary
-    boto3_cfg = cf_r2.get_boto3_cfg()
+    boto3_cfg = cf_r2.get_config(config_file)
     s3 = cf_r2.get_s3(boto3_cfg)
     the_bucket = cf_r2.get_bucket(s3, boto3_cfg)
-    objects_summary = cf_r2.get_summary(boto3_cfg)
+    objects_summary = cf_r2.get_summary(config_file, boto3_cfg, default_summary)
 
 
 # 以上是主命令
@@ -70,17 +69,17 @@ def info(ctx, use_proxy, size_limit):
     tempbk info --use-proxy true (使用代理)
     """
     if use_proxy:
-        cf_r2.set_use_proxy(use_proxy, boto3_cfg)
+        cf_r2.set_use_proxy(use_proxy, boto3_cfg, config_file)
     if size_limit:
-        cf_r2.set_size_limit(size_limit, boto3_cfg)
+        cf_r2.set_size_limit(size_limit, config_file, boto3_cfg)
     if use_proxy or size_limit:
         ctx.exit()
 
     print()
     print(f"[tempbk version] {VERSION}\n")
     print(f"[tempbk]\n{__file__}\n")
-    print(f"[tempbk config]\n{config.app_config_file}\n")
-    cf_r2.print_boto3_cfg(boto3_cfg)
+    print(f"[tempbk config]\n{config_file}\n")
+    cf_r2.print_config(config_file, boto3_cfg)
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
@@ -113,7 +112,7 @@ def upload(ctx, file):
             ctx.exit()
 
     if err := cf_r2.upload_file(
-            filepath, objects_summary, boto3_cfg, the_bucket):
+            filepath, objects_summary, config_file, boto3_cfg, the_bucket):
         print_err(err)
 
 
@@ -161,7 +160,8 @@ def delete(ctx, prefix):
 
     cf_r2.print_delete_list(del_list)
     click.confirm(f"\nDelete {length} objects? (确认删除云端文件)", abort=True)
-    cf_r2.delete_objects(del_list, objects_summary, boto3_cfg, the_bucket)
+    cf_r2.delete_objects(
+        del_list, objects_summary, config_file, boto3_cfg, the_bucket)
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
@@ -220,7 +220,7 @@ def download(ctx, folder, dest, prefix):
             print_err(f"文件夹不存在: {folder}")
             ctx.exit()
 
-        cf_r2.set_download_dir(str(folder), boto3_cfg)
+        cf_r2.set_download_dir(str(folder), config_file, boto3_cfg)
     else:
         folder = cf_r2.get_download_dir(boto3_cfg)
 

@@ -6,8 +6,6 @@ import tomli
 err 是 str, 有内容表示有错误, 空字符串表示没错误.
 """
 
-MB = 1024 * 1024
-
 
 def tomli_load(file) -> dict:
     """正确处理 utf-16"""

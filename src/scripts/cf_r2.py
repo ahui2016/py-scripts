@@ -5,13 +5,14 @@ import threading
 from pathlib import Path
 
 import boto3
-import tomli_w
 import arrow
+import tomli_w
 from humanfriendly import format_size
 from botocore.config import Config
 
-from . import util, config
-from .util import MB
+from . import util
+from .const import MB, Use_Proxy, Http_Proxy, Upload_Size_Limit, Download_Dir, \
+    Objects_Summary
 
 
 """
@@ -28,137 +29,111 @@ err 是 str, 有内容表示有错误, 空字符串表示没错误.
 为了便于区分, 在代码中将本地文件称为 file, 云端文件称为 object.
 """
 
-Objects_Summary = "objects_summary"
-"""
-dict[str, int]  # 日期(年月)与文件数量 '202201': 5
-"""
-default_summary = {}
 
-Download_Dir = "download_dir"
-Upload_Size_Limit = "upload_size_limit"
-Use_Proxy = "use_proxy"
-Http_Proxy = "http_proxy"
-Boto3_Config_Filename = "boto3_config.toml"
-boto3_config_file = config.app_config_dir.joinpath(Boto3_Config_Filename)
+def ensure_config_file(cfg_file, default_config) -> None:
+    if not cfg_file.exists():
+        write_config(cfg_file, default_config)
 
 
-def default_config():
-    return dict(
-        endpoint_url          ='https://<accountid>.r2.cloudflarestorage.com',
-        aws_access_key_id     = '<access_key_id>',
-        aws_secret_access_key = '<access_key_secret>',
-        bucket_name           = '<bucket_name>',
-        download_dir          = '',
-        upload_size_limit     = 50 * MB,
-        http_proxy            = 'http://127.0.0.1:1081',
-        use_proxy             = False,
-    )
+def write_config(cfg_file, cfg):
+    with open(cfg_file, "wb") as f:
+        tomli_w.dump(cfg, f)
 
 
-def ensure_config_file() -> None:
-    if not boto3_config_file.exists():
-        write_boto3_cfg(default_config())
+def get_config(cfg_file):
+    return util.tomli_load(cfg_file)
 
 
-def write_boto3_cfg(boto3_cfg):
-    with open(boto3_config_file, "wb") as f:
-        tomli_w.dump(boto3_cfg, f)
-
-
-def get_boto3_cfg():
-    return util.tomli_load(boto3_config_file)
-
-
-def print_boto3_cfg(boto3_cfg):
-    print(f"[boto3 config]\n{boto3_config_file}\n")
-    dl_dir = boto3_cfg.get(Download_Dir, "")
+def print_config(cfg_file, cfg):
+    dl_dir = cfg.get(Download_Dir, "")
     if not dl_dir:
         dl_dir = "(未设置下载文件夹, 设置方法请查看帮助: tempbk download -h)"
     print(f"[download dir]\n{dl_dir}\n")
-    print(f"[upload size limit] {boto3_cfg[Upload_Size_Limit]} MB")
-    print(f"[use proxy] {boto3_cfg[Use_Proxy]}")
-    proxy = boto3_cfg[Http_Proxy]
-    if not proxy and boto3_cfg[Use_Proxy]:
-        proxy = f"\n未设置 proxy, 请用文本编辑器打开 '{boto3_config_file}' 填写 http proxy"
+    print(f"[upload size limit] {cfg[Upload_Size_Limit]} MB")
+    print(f"[use proxy] {cfg[Use_Proxy]}")
+    proxy = cfg[Http_Proxy]
+    if not proxy and cfg[Use_Proxy]:
+        proxy = f"\n未设置 proxy, 请用文本编辑器打开 '{cfg_file}' 填写 http proxy"
     print(f"[http proxy] {proxy}")
 
 
-def get_bucket(s3, boto3_cfg):
-    return s3.Bucket(boto3_cfg["bucket_name"])
+def get_bucket(s3, cfg):
+    return s3.Bucket(cfg["bucket_name"])
 
 
-def get_s3(boto3_cfg):
+def get_s3(cfg):
     return boto3.resource(
         's3',
-        endpoint_url=boto3_cfg["endpoint_url"],
-        aws_access_key_id=boto3_cfg["aws_access_key_id"],
-        aws_secret_access_key=boto3_cfg["aws_secret_access_key"],
-        config=Config(proxies=get_proxies(boto3_cfg)),
+        endpoint_url=cfg["endpoint_url"],
+        aws_access_key_id=cfg["aws_access_key_id"],
+        aws_secret_access_key=cfg["aws_secret_access_key"],
+        config=Config(proxies=get_proxies(cfg)),
     )
 
 
-def get_proxies(boto3_cfg):
-    if boto3_cfg[Use_Proxy]:
-        return dict(http=boto3_cfg[Http_Proxy], https=boto3_cfg[Http_Proxy])
+def get_proxies(cfg):
+    if cfg[Use_Proxy]:
+        return dict(http=cfg[Http_Proxy], https=cfg[Http_Proxy])
     return None
 
 
-def set_use_proxy(sw:str, boto3_cfg):
+def set_use_proxy(sw:str, cfg, cfg_file):
     use_proxy = False
     if sw.lower() in ["1", "on", "true"]:
         use_proxy = True
 
-    boto3_cfg[Use_Proxy] = use_proxy
-    write_boto3_cfg(boto3_cfg)
-    proxy = boto3_cfg[Http_Proxy]
+    cfg[Use_Proxy] = use_proxy
+    write_config(cfg_file, cfg)
+    proxy = cfg[Http_Proxy]
     print(f"设置成功\nuse proxy = {use_proxy}\nhttp proxy = {proxy}")
 
     if not proxy and use_proxy:
-        print(f"未设置 proxy, 请用文本编辑器打开 {boto3_config_file} 填写 http proxy")
+        print(f"未设置 proxy, 请用文本编辑器打开 {cfg_file} 填写 http proxy")
 
 
-def set_size_limit(limit, boto3_cfg):
-    boto3_cfg[Upload_Size_Limit] = limit
-    write_boto3_cfg(boto3_cfg)
+def set_size_limit(limit, cfg_file, cfg):
+    cfg[Upload_Size_Limit] = limit
+    write_config(cfg_file, cfg)
     print(f"设置成功, 上传文件大小上限: {limit} MB")
 
 
-def get_size_limit(boto3_cfg):
-    return boto3_cfg[Upload_Size_Limit] * MB
+def get_size_limit(cfg):
+    return cfg[Upload_Size_Limit] * MB
 
 
-def set_download_dir(dir_path:str, boto3_cfg):
-    boto3_cfg[Download_Dir] = dir_path
-    write_boto3_cfg(boto3_cfg)
+def set_download_dir(dir_path:str, cfg_file, cfg):
+    cfg[Download_Dir] = dir_path
+    write_config(cfg_file, cfg)
     print(f"设置成功, 下载文件默认保存至 {dir_path}")
 
 
-def get_download_dir(boto3_cfg):
-    return Path(boto3_cfg[Download_Dir])
+def get_download_dir(cfg):
+    return Path(cfg[Download_Dir])
 
 
-def check_download_dir(boto3_cfg):
+def check_download_dir(cfg):
     """
     :return: err: str
     """
-    dl_dir = boto3_cfg.get(Download_Dir, "")
+    dl_dir = cfg.get(Download_Dir, "")
     if not dl_dir:
         return "请先设置文件夹用于保存下载文件, 例如:\n" \
             "tempbk download -dir /path/to/folder"
     return ""
 
 
-def get_summary(boto3_cfg):
-    if Objects_Summary not in boto3_cfg:
-        write_summary(default_summary, boto3_cfg)
+def get_summary(cfg_file, cfg, default_summary):
+    # Objects_Summary: dict[str, int]  日期(年月)与文件数量 '202201': 5
+    if Objects_Summary not in cfg:
+        write_summary(default_summary, cfg_file, cfg)
         return default_summary
+    return json.loads(cfg[Objects_Summary])
 
-    return json.loads(boto3_cfg[Objects_Summary])
 
-
-def write_summary(summary:dict, boto3_cfg):
-    boto3_cfg[Objects_Summary] = json.dumps(summary)
-    write_boto3_cfg(boto3_cfg)
+def write_summary(summary:dict, cfg_file, cfg):
+    # Objects_Summary: dict[str, int]  日期(年月)与文件数量 '202201': 5
+    cfg[Objects_Summary] = json.dumps(summary)
+    write_config(cfg_file, cfg)
 
 
 def update_summary(obj_name, summary):
@@ -206,22 +181,22 @@ def add_prefix(filepath: Path):
     return f"{today()}/{filepath.name}"
 
 
-def check_file_size(file:Path, boto3_cfg):
+def check_file_size(file:Path, cfg):
     """
     :return: err: str
     """
     filesize = file.lstat().st_size
-    sizelimit = get_size_limit(boto3_cfg)
+    sizelimit = get_size_limit(cfg)
     if filesize > sizelimit:
-        return f"文件体积({format_size(filesize)}) 超过上限({boto3_cfg[Upload_Size_Limit]}MB)"
+        return f"文件体积({format_size(filesize)}) 超过上限({cfg[Upload_Size_Limit]}MB)"
     return ""
 
 
-def upload_file(filepath, summary, boto3_cfg, bucket):
+def upload_file(filepath, summary, cfg_file, cfg, bucket):
     """
     :return: err: str
     """
-    if err := check_file_size(filepath, boto3_cfg):
+    if err := check_file_size(filepath, cfg):
         return err
 
     obj_name = add_prefix(filepath)
@@ -232,7 +207,7 @@ def upload_file(filepath, summary, boto3_cfg, bucket):
     )
     if not exists:
         summary = update_summary(obj_name, summary)
-        write_summary(summary, boto3_cfg)
+        write_summary(summary, cfg_file, cfg)
 
     return ""
 
@@ -288,13 +263,13 @@ def print_delete_list(del_list):
         print(f"... {more} more items not showing ...")
 
 
-def delete_objects(objects, summary, boto3_cfg, bucket):
+def delete_objects(objects, summary, cfg_file, cfg, bucket):
     resp = bucket.delete_objects(
         Delete={'Objects': objects}
     )
     deleted = resp['Deleted']
     summary = minus_summary(deleted, summary)
-    write_summary(summary, boto3_cfg)
+    write_summary(summary, cfg_file, cfg)
     if len(objects) != len(deleted):
         print_deleted(deleted)
     if 'Errors' in resp:

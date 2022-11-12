@@ -14,7 +14,6 @@ App_Config = config.get_config()
 boto3_cfg: dict
 objects_summary: dict
 s3: Any
-s3_client: Any
 the_bucket: Any
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
@@ -33,10 +32,9 @@ def cli():
 
     https://github.com/ahui2016/py-scripts/blob/main/docs/README-tempbk.md
     """
-    global boto3_cfg, s3, s3_client, the_bucket, objects_summary
+    global boto3_cfg, s3, the_bucket, objects_summary
     boto3_cfg = cf_r2.get_boto3_cfg()
     s3 = cf_r2.get_s3(boto3_cfg)
-    s3_client = cf_r2.get_s3_client(boto3_cfg)
     the_bucket = cf_r2.get_bucket(s3, boto3_cfg)
     objects_summary = cf_r2.get_summary(boto3_cfg)
 
@@ -48,32 +46,35 @@ def cli():
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
 @click.option(
+    "use_proxy",
+    "--use-proxy",
+    help="Set '1' or 'on' or 'true' to use proxy.",
+)
+@click.option(
     "size_limit",
     "--set-size",
     type=int,
     help="Set upload size limit (unit: MB).",
 )
 @click.pass_context
-def info(ctx, size_limit):
+def info(ctx, use_proxy, size_limit):
     """Show or set information.
 
     Example:
 
     tempbk info --set-size 25 (设置上传文件体积上限, 单位: MB)
     """
+    if use_proxy:
+        cf_r2.set_use_proxy(use_proxy, boto3_cfg)
     if size_limit:
         cf_r2.set_size_limit(size_limit, boto3_cfg)
+    if use_proxy or size_limit:
         ctx.exit()
 
     print()
     print(f"[tempbk]\n{__file__}\n")
     print(f"[tempbk config]\n{config.app_config_file}\n")
-    print(f"[boto3 config]\n{cf_r2.boto3_config_file}\n")
-    dl_dir = boto3_cfg.get(cf_r2.Download_Dir, "")
-    if not dl_dir:
-        dl_dir = "(未设置下载文件夹, 设置方法请查看帮助: tempbk download -h)"
-    print(f"[download dir]\n{dl_dir}\n")
-    print(f"[upload size limit] {boto3_cfg[cf_r2.Upload_Size_Limit]} MB")
+    cf_r2.print_boto3_cfg(boto3_cfg)
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
@@ -108,6 +109,9 @@ def list_command(prefix):
 
     tempbk list today  (列出今天的全部文件)
     """
+    if prefix == "today":
+        prefix = cf_r2.today()
+
     objects = cf_r2.get_objects_by_prefix(prefix, the_bucket)
     i = cf_r2.print_objects_key(objects)
     if i == 0:

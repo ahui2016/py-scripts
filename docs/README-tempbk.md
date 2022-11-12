@@ -118,6 +118,7 @@ bucket = '<bucket-name>'
 
 - 快速上传当前目录的最新一个文件（回车确认）
 - 下载并删除
+- proxy <https://stackoverflow.com/questions/33480108/how-do-you-use-an-http-https-proxy-with-boto3>
 
 ## 参考
 

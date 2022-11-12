@@ -8,6 +8,7 @@ import boto3
 import tomli_w
 import arrow
 from humanfriendly import format_size
+from botocore.config import Config
 
 from . import util, config
 from .util import MB
@@ -35,8 +36,11 @@ default_summary = {}
 
 Download_Dir = "download_dir"
 Upload_Size_Limit = "upload_size_limit"
+Use_Proxy = "use_proxy"
+Http_Proxy = "http_proxy"
 Boto3_Config_Filename = "boto3_config.toml"
 boto3_config_file = config.app_config_dir.joinpath(Boto3_Config_Filename)
+
 
 def default_config():
     return dict(
@@ -45,7 +49,9 @@ def default_config():
         aws_secret_access_key = '<access_key_secret>',
         bucket_name           = '<bucket_name>',
         download_dir          = '',
-        upload_size_limit     = 50 * MB
+        upload_size_limit     = 50 * MB,
+        http_proxy            = 'http://127.0.0.1:1081',
+        use_proxy             = False,
     )
 
 
@@ -63,6 +69,20 @@ def get_boto3_cfg():
     return util.tomli_load(boto3_config_file)
 
 
+def print_boto3_cfg(boto3_cfg):
+    print(f"[boto3 config]\n{boto3_config_file}\n")
+    dl_dir = boto3_cfg.get(Download_Dir, "")
+    if not dl_dir:
+        dl_dir = "(未设置下载文件夹, 设置方法请查看帮助: tempbk download -h)"
+    print(f"[download dir]\n{dl_dir}\n")
+    print(f"[upload size limit] {boto3_cfg[Upload_Size_Limit]} MB")
+    print(f"[use proxy] {boto3_cfg[Use_Proxy]}")
+    proxy = boto3_cfg[Http_Proxy]
+    if not proxy and boto3_cfg[Use_Proxy]:
+        proxy = f"\n未设置 proxy, 请用文本编辑器打开 '{boto3_config_file}' 填写 http proxy"
+    print(f"[http proxy] {proxy}")
+
+
 def get_bucket(s3, boto3_cfg):
     return s3.Bucket(boto3_cfg["bucket_name"])
 
@@ -70,19 +90,31 @@ def get_bucket(s3, boto3_cfg):
 def get_s3(boto3_cfg):
     return boto3.resource(
         's3',
-        endpoint_url = boto3_cfg["endpoint_url"],
-        aws_access_key_id = boto3_cfg["aws_access_key_id"],
-        aws_secret_access_key = boto3_cfg["aws_secret_access_key"]
+        endpoint_url=boto3_cfg["endpoint_url"],
+        aws_access_key_id=boto3_cfg["aws_access_key_id"],
+        aws_secret_access_key=boto3_cfg["aws_secret_access_key"],
+        config=Config(proxies=get_proxies(boto3_cfg)),
     )
 
 
-def get_s3_client(boto3_cfg):
-    return boto3.client(
-        's3',
-        endpoint_url = boto3_cfg["endpoint_url"],
-        aws_access_key_id = boto3_cfg["aws_access_key_id"],
-        aws_secret_access_key = boto3_cfg["aws_secret_access_key"]
-    )
+def get_proxies(boto3_cfg):
+    if boto3_cfg[Use_Proxy]:
+        return dict(http=boto3_cfg[Http_Proxy], https=boto3_cfg[Http_Proxy])
+    return None
+
+
+def set_use_proxy(sw:str, boto3_cfg):
+    use_proxy = False
+    if sw.lower() in ["1", "on", "true"]:
+        use_proxy = True
+
+    boto3_cfg[Use_Proxy] = use_proxy
+    write_boto3_cfg(boto3_cfg)
+    proxy = boto3_cfg[Http_Proxy]
+    print(f"设置成功\nuse proxy = {use_proxy}\nhttp proxy = {proxy}")
+
+    if not proxy and use_proxy:
+        print(f"未设置 proxy, 请用文本编辑器打开 {boto3_config_file} 填写 http proxy")
 
 
 def set_size_limit(limit, boto3_cfg):
@@ -221,8 +253,6 @@ def obj_exists(obj_name, bucket):
 
 
 def get_objects_by_prefix(prefix, bucket):
-    if prefix == "today":
-        prefix = today()
     return bucket.objects.filter(Prefix=prefix)
 
 

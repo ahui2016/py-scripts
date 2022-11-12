@@ -1,7 +1,13 @@
 import tomli
 
+"""
+【关于返回值】
+本项目的返回值有时采用 (result, err) 的形式,
+err 是 str, 有内容表示有错误, 空字符串表示没错误.
+"""
 
 MB = 1024 * 1024
+
 
 def tomli_load(file) -> dict:
     """正确处理 utf-16"""
@@ -12,3 +18,16 @@ def tomli_load(file) -> dict:
         except UnicodeDecodeError:
             text = text.decode("utf-16").encode().decode()
         return tomli.loads(text)
+
+
+def get_new_file(folder):
+    """获取指定文件夹中的一个最新文件 (按修改时间排序)
+
+    :return: 如果是文件夹, 则返回 None
+    """
+    files = folder.glob("*")
+    files = [x for x in files if x.is_file()]
+    if len(files) == 0:
+        return None
+    files.sort(key=lambda x: x.lstat().st_mtime, reverse=True)
+    return files[0]

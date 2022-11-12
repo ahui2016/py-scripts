@@ -3,7 +3,7 @@ from typing import Any
 
 import click
 
-from scripts import config, cf_r2
+from scripts import config, cf_r2, util
 
 
 # 初始化
@@ -85,14 +85,25 @@ def count():
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("file", nargs=1, type=click.Path(exists=True))
-def upload(file):
+@click.pass_context
+def upload(ctx, file):
     """Upload a file.
 
     上传文件. 注意, 如果云端有同名文件, 同一天内的会直接覆盖,
     非同一天的同名文件会在云端产生不同的文件 (日期前缀不同).
     """
+    filepath = Path(file)
+    if filepath.is_dir():
+        filepath = util.get_new_file(filepath)
+        if filepath is None:
+            print(f"空文件夹 => {file}\n请指定一个文件, 或一个非空文件夹")
+            ctx.exit()
+        print(f"找到文件 {filepath}")
+        if not click.confirm("要上传该文件吗?", default=True):
+            ctx.exit()
+
     if err := cf_r2.upload_file(
-            Path(file), objects_summary, boto3_cfg, the_bucket):
+            filepath, objects_summary, boto3_cfg, the_bucket):
         print_err(err)
 
 

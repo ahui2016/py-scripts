@@ -237,13 +237,6 @@ def upload_file(filepath, summary, boto3_cfg, bucket):
     return ""
 
 
-def get_new_files(folder:Path):
-    files = folder.glob("*")
-    files = [x for x in files if x.is_file()]
-    files.sort(key=lambda x: x.lstat().st_mtime, reverse=True)
-    return files[0]
-
-
 def obj_exists(obj_name, bucket):
     objects = get_objects_by_prefix(obj_name, bucket)
     for obj in objects:
@@ -265,7 +258,7 @@ def objects_to_list(objects):
 
 
 def objects_to_delete(objects):
-    """专门转换为待删除列表"""
+    """转换为待删除列表"""
     obj_list = []
     for f in objects:
         obj_list.append(dict(Key=f.key))

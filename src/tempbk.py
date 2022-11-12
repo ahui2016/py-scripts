@@ -7,6 +7,7 @@ from scripts import config, cf_r2, util
 
 
 # 初始化
+VERSION = "2022-11-12"
 config.ensure_config_file()
 cf_r2.ensure_config_file()
 
@@ -62,7 +63,11 @@ def info(ctx, use_proxy, size_limit):
 
     Example:
 
-    tempbk info --set-size 25 (设置上传文件体积上限, 单位: MB)
+    tempbk info --set-size 25 (设置上传文件体积上限为 25 MB)
+
+    tempbk info --use-proxy off (不使用代理)
+
+    tempbk info --use-proxy true (使用代理)
     """
     if use_proxy:
         cf_r2.set_use_proxy(use_proxy, boto3_cfg)
@@ -72,6 +77,7 @@ def info(ctx, use_proxy, size_limit):
         ctx.exit()
 
     print()
+    print(f"[tempbk version] {VERSION}\n")
     print(f"[tempbk]\n{__file__}\n")
     print(f"[tempbk config]\n{config.app_config_file}\n")
     cf_r2.print_boto3_cfg(boto3_cfg)
@@ -91,6 +97,10 @@ def upload(ctx, file):
 
     上传文件. 注意, 如果云端有同名文件, 同一天内的会直接覆盖,
     非同一天的同名文件会在云端产生不同的文件 (日期前缀不同).
+
+    `tempbk upload FILE` 上传文件到云端.
+
+    `tempbk upload FOLDER` 上传文件夹内的最新文件
     """
     filepath = Path(file)
     if filepath.is_dir():
@@ -142,16 +152,16 @@ def delete(ctx, prefix):
     tempbk delete 202211           (删除2022年11月的全部文件)
     """
     objects = cf_r2.get_objects_by_prefix(prefix, the_bucket)
-    obj_del_list = cf_r2.objects_to_delete(objects)
-    length = len(obj_del_list)
+    del_list = cf_r2.objects_to_delete(objects)
+    length = len(del_list)
     if length == 0:
         print(f"Not Found: {prefix}")
         print("(注意, 必须以日期前缀开头, 并且文件名区分大小写)")
         ctx.exit()
 
-    cf_r2.print_objects_key(objects)
+    cf_r2.print_delete_list(del_list)
     click.confirm(f"\nDelete {length} objects? (确认删除云端文件)", abort=True)
-    cf_r2.delete_objects(obj_del_list, objects_summary, boto3_cfg, the_bucket)
+    cf_r2.delete_objects(del_list, objects_summary, boto3_cfg, the_bucket)
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)

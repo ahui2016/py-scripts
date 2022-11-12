@@ -4,7 +4,7 @@ Temp Backup: 临时备份文件
 
 - 本软件通过终端输入命令上传文件到 Cloudflare R2 进行临时(短期)备份.
 - 上传前会自动加密, 下载后会自动解密
-- Cloudflare R2 的优点: 10GB免费容量, 流量免费.
+- Cloudflare R2 的优点: 10GB 免费容量, 流量免费.
 - 本软件专门针对小文件的临时(短期)备份, 因此 10GB 免费容量够用了.
 - 本软件的安装过程比较复杂, 需要对 Cloudflare R2 及 Python 有基本的理解.
 
@@ -15,8 +15,9 @@ Temp Backup: 临时备份文件
 1. 注册账户 <https://www.cloudflare.com/>
 2. 启用 R2 服务 <https://developers.cloudflare.com/r2/get-started/>  
    内含 10GB 免费容量, 流量免费, 注册时需要信用卡或 PayPal  
-   (注意: 上传下载等的操作次数超过上限也会产生费用, 详情以 Cloudflare 官方说明为准).
-3. 在 dashboard 进入 R2 页面，点击 Create bucket 创建一个数据桶。
+   (注意: 上传下载等的操作次数超过上限也会产生费用,
+    详情以 Cloudflare 官方说明为准).
+3. 从 dashboard 进入 R2 页面，点击 Create bucket 创建一个数据桶。
    建议 bucket 的名称设为 `temp-backup`
 
 至此, 我们得到了一个 bucket, 请记住该 bucket 的名称.
@@ -25,10 +26,11 @@ Temp Backup: 临时备份文件
 
 1. 在 R2 页面可以找到 Account ID, 请复制保存, 后续有用.
 2. 在 R2 页面点击 Manage R2 API Tokens
-3. 点击 Create API Token, 权限选择 Edit, 再点击右下角的 Create API Token  
-   按钮, 即可得到 Access Key ID 和 Secret Access Key  
+3. 点击 Create API Token, 权限选择 Edit, 再点击右下角的 Create API
+   Token 按钮, 即可得到 Access Key ID 和 Secret Access Key
 
-**注意**: Access Key ID 和 Secret Access Key 只显示一次, 请立即复制保存
+**注意**:
+Access Key ID 和 Secret Access Key 只显示一次, 请立即复制保存
 (建议保存到密码管理器中)
 
 至此, 我们一共获得了 4 个重要信息, 请妥善保存这四个信息:
@@ -52,11 +54,6 @@ $ conda create --name py310 python=3.10.6
 $ conda activate py310
 ```
 
-安装非常简单，只要 `pip install pyboke` 即可。  
-
-(另外推荐了解一下 [pipx](https://pypa.github.io/pipx/)
-这是用来安装 Python 命令行软件的优秀工具）
-
 ### 获取源代码
 
 可以通过以下其中一种方式下载代码:
@@ -64,11 +61,11 @@ $ conda activate py310
 1. 最新代码 <https://github.com/ahui2016/py-scripts/archive/refs/heads/main.zip>
 2. 指定版本的代码 <https://github.com/ahui2016/py-scripts/releases/latest>
 
-加压缩后, 进入项目根目录 (有 setup.cfg 的文件夹).
+解压缩后, 进入项目根目录 (有 setup.cfg 的文件夹).
 
 ### 虚拟环境
 
-可以不适用虚拟环境, 但建议使用 miniconda 或 venv 创建虚拟环境.  
+可以不使用虚拟环境, 但建议使用 miniconda 或 venv 创建虚拟环境.  
 
 ### 本地安装
 
@@ -78,13 +75,11 @@ $ conda activate py310
 python -m pip install -e .
 ```
 
+就完成了本地安装, 在此状态下, 你可以直接修改源代码, 一切修改都会立即生效. (不需要重新安装)
+
+如果你在一个虚拟环境中进行本地安装, 则每次都需要进入该虚拟环境才能使用本软件.
+
 > (提示: 执行 `python -m pip uninstall .` 可以卸载)
-
-就完成了本地安装, 在此状态下, 你可以直接修改源代码, 一切修改都会立即生效.  
-(不需要重新安装)
-
-如果你在一个虚拟环境中进行本地安装, 则每次都需要进入该虚拟环境才能使用本软件.  
-(不需要重新安装)
 
 完成以上操作后, 执行命令 `tempbk info`, 可以看到配置文件的具体位置,
 接下来需要打开配置文件填写信息, 详见下一节.
@@ -111,14 +106,65 @@ bucket = '<bucket-name>'
 
 ## 上传文件
 
-- 默认限制 50MB, 是为了防止不小心上传太大的文件.
-- 可以自定义.
+- 使用命令 `tempbk upload FILE` 上传文件到云端.
+- 上传文件体积上限默认 50MB, 防止不小心上传太大的文件.
+- 使用命令 `tempbk info` 可以查看上传文件体积上限.
+- 可以自定义上传文件体积上限, 例如 `tempbk info --set-size 25`
+  将上限设为 25MB
+
+### 自动选择一个最新文件
+
+- 使用命令 `tempbk upload FOLDER` (其中 FOLDER 是一个文件夹)
+  可以自动选择该文件夹中的一个最新文件 (以最近修改时间为准),
+  按回车键上传, 输入 n 回车取消.
+- 例如 `tempbk upload .` 上传当前文件夹内的最新文件.
+
+### 同名文件
+
+- 在同一天内多次上传同名文件, 新上传的文件会覆盖旧文件.
+- 如果不是同一天 (比如隔天) 上传同名文件, 在云端会产生一个新的文件,
+  也就是说, 昨天或更早的同名文件会保留, 不会被覆盖.
+
+## 统计数据
+
+- 使用命令 `tempbk count` 可查看各个月份上传了多少个文件.
+- 全部文件占用的总空间大小, 请到 Cloudflare 网站查看.
+- 使用命令 `tempbk list today` 可列出今天上传的全部文件.
+- `tempbk list 202211` 列出2022年11月上传的全部文件.
+- `tempbk list 20221111` 列出2022年11月11日上传的全部文件.
+- `tempbk list 202` 列出2020年至2029年上传的全部文件.
+
+## 删除云端文件
+
+- `tempbk delete 202` 删除2020年至2029年上传的全部文件.
+- `tempbk delete 202211` 删除2022年11月上传的全部文件.
+- `tempbk delete 20221111` 删除2022年11月11日上传的全部文件.
+- `tempbk delete 20221111/abc.txt` 删除2022年11月11日上传的名为 abc.txt 的文件
+
+## 下载文件
+
+- `tempbk download 20221111/abc.txt --save-as /path/to/cde.txt`
+  下载文件保存到指定的文件夹及文件名
+- 另外可以在下载前指定保存文件的文件夹, 例如:
+  `tempbk download -dir /path/to/folder`  
+  只需要设置一次, 后续使用命令 `tempbk download 20221111/abc.txt`
+  下载文件就会自动保存在指定的文件夹.
+- 使用命令 `tempbk info` 可以查看当前设定的下载文件夹.
+- 另外, 在 Cloudflare 网站也可以下载文件.
+
+## 使用代理 (http proxy)
+
+- 默认不使用代理.
+- 使用命令 `tempbk info --use-proxy true` 可设置为使用代理.  
+  其中 `true` 也可以是 `1`(壹) 或 `on`.
+- 在上面的命令中, 如果输入参数不是 `true`, `1`, `on`, 而是其它任何文字,
+  则会设置为不使用代理.
+- 默认代理地址是 `http://127.0.0.1:1081`, 可通过命令 `tempbk info`
+  找到 boto3 config 文件的位置, 用文本编辑器打开它, 修改 http proxy.
 
 ## TODO
 
-- 快速上传当前目录的最新一个文件（回车确认）
-- 下载并删除
-- proxy <https://stackoverflow.com/questions/33480108/how-do-you-use-an-http-https-proxy-with-boto3>
+- 下载后自动删除云端文件
 
 ## 参考
 
@@ -131,11 +177,10 @@ bucket = '<bucket-name>'
   - 通过 *提供文件内容* 来上传文件
   - <https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Bucket.upload_fileobj>
 
+### proxy
 
-- <https://boto3.amazonaws.com/v1/documentation/api/latest/guide/collections.html>
-- <https://boto3.amazonaws.com/v1/documentation/api/latest/reference/core/collections.html>
-- <https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html>
+<https://stackoverflow.com/questions/33480108/how-do-you-use-an-http-https-proxy-with-boto3>
 
-
+### 加密
 
 <https://cryptography.io/en/latest/fernet/#using-passwords-with-fernet>

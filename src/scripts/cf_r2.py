@@ -278,6 +278,16 @@ def print_objects_key(objects):
     return i
 
 
+def print_delete_list(del_list):
+    limit = 10  # 只显示 10 个文件名
+    for i in range(limit):
+        print(del_list[i]["Key"])
+
+    more = len(del_list) - limit
+    if more > 0:
+        print(f"... {more} more items not showing ...")
+
+
 def delete_objects(objects, summary, boto3_cfg, bucket):
     resp = bucket.delete_objects(
         Delete={'Objects': objects}

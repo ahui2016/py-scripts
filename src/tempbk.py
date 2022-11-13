@@ -8,7 +8,7 @@ from scripts.tempbk_config import config_file, default_config, default_summary
 
 
 # 初始化
-VERSION = "2022-11-12"
+VERSION = "2022-11-13"
 cf_r2.ensure_config_file(config_file, default_config())
 
 boto3_cfg: dict
@@ -25,10 +25,14 @@ def print_err(err):
 
 @click.group(invoke_without_command=True)
 @click.help_option("-h", "--help")
+@click.option("i", "-i", "-v", "-V", is_flag=True, help="Show information.")
 @click.option("c", "-c", is_flag=True, help="Count files uploaded.")
-@click.option("l", "-l")
+@click.option("l", "-l", help="List objects by prefix.")
+@click.option("u", "-u", help="Upload a file.")
+@click.option("dl", "-dl", help="Download a file.")
+@click.option("d", "-del", help="Delete objects by prefix.")
 @click.pass_context
-def cli(ctx, c, l):
+def cli(ctx, i, c, l, u, dl, d):
     """Temp Backup: 臨時備份文件
 
     詳細使用方法看這裡:
@@ -41,11 +45,23 @@ def cli(ctx, c, l):
     the_bucket = cf_r2.get_bucket(s3, boto3_cfg)
     objects_summary = cf_r2.get_summary(config_file, boto3_cfg, default_summary)
 
+    if i:
+        ctx.invoke(info)
+        ctx.exit()
     if c:
         ctx.invoke(count)
         ctx.exit()
     if l:
         ctx.invoke(list_command, prefix=l)
+        ctx.exit()
+    if u:
+        ctx.invoke(upload, file=u)
+        ctx.exit()
+    if dl:
+        ctx.invoke(download, prifix=dl)
+        ctx.exit()
+    if d:
+        ctx.invoke(delete, prefix=d)
         ctx.exit()
 
     if ctx.invoked_subcommand is None:

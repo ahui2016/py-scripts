@@ -254,11 +254,14 @@ def print_objects_key(objects):
 
 
 def print_delete_list(del_list):
-    limit = 10  # 只显示 10 个文件名
+    limit = 10  # 最多只显示 10 个文件名
+    length = len(del_list)
+    if length < limit:
+        limit = length
     for i in range(limit):
         print(del_list[i]["Key"])
 
-    more = len(del_list) - limit
+    more = length - limit
     if more > 0:
         print(f"... {more} more items not showing ...")
 

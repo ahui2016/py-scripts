@@ -111,7 +111,7 @@ def get_download_dir(cfg):
     return Path(cfg[Download_Dir])
 
 
-def check_download_dir(cfg):
+def download_dir_exists(cfg):
     """
     :return: err: str
     """

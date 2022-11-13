@@ -69,9 +69,11 @@ def cli(ctx, i, c, l, u, dl, d):
         ctx.exit()
 
 
-# 以上是主命令
-############
-# 以下是子命令
+"""
+以上是主命令
+------------
+以下是子命令
+"""
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
@@ -225,11 +227,50 @@ def download(ctx, folder, dest, prefix):
 
     tempbk download 20221111/abc.txt --save-as /path/to/cde.txt
     """
-    if err := cf_r2.check_download_dir(boto3_cfg):
+    check_download_params(ctx, folder, dest, prefix)
+    download_dir_exists(ctx, folder, dest)
+    dl_dir = set_download_dir(ctx, folder)
+    dest = get_download_dest(ctx, dest, prefix)
+
+    # 经过上述处理后，此时 prefix 一定有内容。
+    objects = cf_r2.get_objects_by_prefix(prefix, the_bucket)
+    obj_list = cf_r2.objects_to_list(objects)
+    length = len(obj_list)
+    if length == 0:
+        print(f"Not Found: {prefix}")
+        print("(注意, 必须以日期前缀开头, 并且文件名区分大小写)")
+        ctx.exit()
+    if length > 1:
+        print("每次只能下载一个文件:\n")
+        cf_r2.print_objects_with_size(obj_list)
+        ctx.exit()
+
+    obj = obj_list[0]
+    filepath, err = cf_r2.get_download_filepath(obj['key'], dl_dir, dest)
+    if err.find("文件夹不存在") >= 0:
+        print_err(err)
+        ctx.exit()
+
+    if err.find("文件已存在") >= 0:
+        print(err)
+        click.confirm("要覆盖文件吗?", abort=True)
+        err = ""
+
+    if err:
+        print(err)
+        ctx.exit()
+
+    cf_r2.download_file(the_bucket, obj['key'], obj['size'], filepath)
+
+
+def download_dir_exists(ctx, folder, dest):
+    if err := cf_r2.download_dir_exists(boto3_cfg):
         if (not folder) and (not dest):
             print_err(err)
             ctx.exit()
 
+
+def check_download_params(ctx, folder, dest, prefix):
     if (not folder) and (not dest) and (not prefix):
         print(
             "下载指定前缀的云端文件(必须包含日期前缀), 例如:\n"
@@ -237,6 +278,9 @@ def download(ctx, folder, dest, prefix):
         )
         ctx.exit()
 
+
+def set_download_dir(ctx, folder):
+    """设置下载文件夹，并返回该文件夹的路径。"""
     if folder:
         folder = Path(folder).resolve()
         if folder.is_file():
@@ -253,6 +297,16 @@ def download(ctx, folder, dest, prefix):
         cf_r2.set_download_dir(str(folder), config_file, boto3_cfg)
     else:
         folder = cf_r2.get_download_dir(boto3_cfg)
+    return folder
+
+
+def get_download_dest(ctx, dest, prefix):
+    if dest and not prefix:
+        print(
+            "下载指定前缀的云端文件(必须包含日期前缀), 例如:\n"
+            f"tempbk download 20221111/abc.txt --save-as {dest}"
+        )
+        ctx.exit()
 
     if not dest:
         dest = None
@@ -265,32 +319,7 @@ def download(ctx, folder, dest, prefix):
             )
             ctx.exit()
 
-    if prefix:
-        objects = cf_r2.get_objects_by_prefix(prefix, the_bucket)
-        obj_list = cf_r2.objects_to_list(objects)
-        length = len(obj_list)
-        if length == 0:
-            print(f"Not Found: {prefix}")
-            print("(注意, 必须以日期前缀开头, 并且文件名区分大小写)")
-            ctx.exit()
-        if length > 1:
-            print("每次只能下载一个文件:\n")
-            cf_r2.print_objects_with_size(obj_list)
-            ctx.exit()
-
-        obj = obj_list[0]
-        filepath, err = cf_r2.get_download_filepath(obj['key'], folder, dest)
-        if err.find("文件夹不存在") >= 0:
-            print_err(err)
-            ctx.exit()
-
-        if err.find("文件已存在") >= 0:
-            print(err)
-            click.confirm("要覆盖文件吗?", abort=True)
-            err = ""
-
-        if not err:
-            cf_r2.download_file(the_bucket, obj['key'], obj['size'], filepath)
+    return dest
 
 
 if __name__ == "__main__":

@@ -23,9 +23,12 @@ def print_err(err):
     print(f"Error: {err}")
 
 
-@click.group()
+@click.group(invoke_without_command=True)
 @click.help_option("-h", "--help")
-def cli():
+@click.option("c", "-c", is_flag=True, help="Count files uploaded.")
+@click.option("l", "-l")
+@click.pass_context
+def cli(ctx, c, l):
     """Temp Backup: 臨時備份文件
 
     詳細使用方法看這裡:
@@ -37,6 +40,17 @@ def cli():
     s3 = cf_r2.get_s3(boto3_cfg)
     the_bucket = cf_r2.get_bucket(s3, boto3_cfg)
     objects_summary = cf_r2.get_summary(config_file, boto3_cfg, default_summary)
+
+    if c:
+        ctx.invoke(count)
+        ctx.exit()
+    if l:
+        ctx.invoke(list_command, prefix=l)
+        ctx.exit()
+
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+        ctx.exit()
 
 
 # 以上是主命令

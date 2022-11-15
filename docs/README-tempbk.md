@@ -6,6 +6,7 @@ Temp Backup: 临时备份文件到 Cloudflare R2
 - 上传前会自动加密, 下载后会自动解密
 - Cloudflare R2 的优点: 10GB 免费容量, 流量免费.
 - 本软件专门针对小文件的临时(短期)备份, 因此 10GB 免费容量够用了.
+- 我这里直连 Cloudflare 速度比较慢, 但设置代理后就很快了.
 - 本软件的安装过程比较复杂, 需要对 Cloudflare R2 及 Python 有基本的理解.
 
 ## 准备工作
@@ -118,6 +119,17 @@ bucket = '<bucket-name>'
   可以自动选择该文件夹中的一个最新文件 (以最近修改时间为准),
   按回车键上传, 输入 n 回车取消.
 - 例如 `tempbk upload .` 上传当前文件夹内的最新文件.
+
+### 常用路径
+
+- 使用命令 `tempbk upload --add-fav PATH` (其中 PATH 是文件或文件夹)
+  可以登记一个文件或文件夹.
+- 登记后使用命令 `tempbk upload -fav` 可查看已登记列表及其编号.
+- 使用命令 `tempbk upload -fav N` (其中 N 是一个数字编号)
+  相当于上传指定的文件或文件夹内的一个最新文件.
+- 使用命令 `tempbk upload --del-fav N` (其中 N 是一个数字编号)
+  可以删除一个文件或文件夹. **注意**: 删除操作有可能导致编号变化.
+- `tempbk -ufav` 等同于 `tempbk upload -fav`
 
 ### 同名文件
 

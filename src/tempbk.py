@@ -11,7 +11,7 @@ from scripts.tempbk_config import config_file, default_config, default_summary
 VERSION = "2022-11-13"
 cf_r2.ensure_config_file(config_file, default_config())
 
-boto3_cfg: dict
+cfg: dict
 objects_summary: dict
 s3: Any
 the_bucket: Any
@@ -20,7 +20,14 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
 def print_err(err):
-    print(f"Error: {err}")
+    if err:
+        print(f"Error: {err}")
+
+
+def print_err_exist(ctx, err):
+    if err:
+        print(f"Error: {err}")
+        ctx.exit()
 
 
 @click.group(invoke_without_command=True)
@@ -29,21 +36,27 @@ def print_err(err):
 @click.option("c", "-c", is_flag=True, help="Count files uploaded.")
 @click.option("l", "-l", help="List objects by prefix.")
 @click.option("u", "-u", help="Upload a file.")
+@click.option(
+    "ufav",
+    "-ufav",
+    type=int,
+    help="Show favorite paths or select a path to upload.",
+)
 @click.option("dl", "-dl", help="Download a file.")
 @click.option("d", "-del", help="Delete objects by prefix.")
 @click.pass_context
-def cli(ctx, i, c, l, u, dl, d):
+def cli(ctx, i, c, l, u, ufav, dl, d):
     """Temp Backup: 臨時備份文件
 
     詳細使用方法看這裡:
 
     https://github.com/ahui2016/py-scripts/blob/main/docs/README-tempbk.md
     """
-    global boto3_cfg, s3, the_bucket, objects_summary
-    boto3_cfg = cf_r2.get_config(config_file)
-    s3 = cf_r2.get_s3(boto3_cfg)
-    the_bucket = cf_r2.get_bucket(s3, boto3_cfg)
-    objects_summary = cf_r2.get_summary(config_file, boto3_cfg, default_summary)
+    global cfg, s3, the_bucket, objects_summary
+    cfg = cf_r2.get_config(config_file)
+    s3 = cf_r2.get_s3(cfg)
+    the_bucket = cf_r2.get_bucket(s3, cfg)
+    objects_summary = cf_r2.get_summary(config_file, cfg, default_summary)
 
     if i:
         ctx.invoke(info)
@@ -56,6 +69,9 @@ def cli(ctx, i, c, l, u, dl, d):
         ctx.exit()
     if u:
         ctx.invoke(upload, file=u)
+        ctx.exit()
+    if ufav is not None:
+        ctx.invoke(upload, fav=ufav)
         ctx.exit()
     if dl:
         ctx.invoke(download, prifix=dl)
@@ -101,9 +117,9 @@ def info(ctx, use_proxy, size_limit):
     tempbk info --use-proxy true (使用代理)
     """
     if use_proxy:
-        cf_r2.set_use_proxy(use_proxy, boto3_cfg, config_file)
+        cf_r2.set_use_proxy(use_proxy, cfg, config_file)
     if size_limit:
-        cf_r2.set_size_limit(size_limit, config_file, boto3_cfg)
+        cf_r2.set_size_limit(size_limit, config_file, cfg)
     if use_proxy or size_limit:
         ctx.exit()
 
@@ -111,7 +127,7 @@ def info(ctx, use_proxy, size_limit):
     print(f"[tempbk version] {VERSION}\n")
     print(f"[tempbk]\n{__file__}\n")
     print(f"[tempbk config]\n{config_file}\n")
-    cf_r2.print_config(config_file, boto3_cfg)
+    cf_r2.print_config(config_file, cfg)
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
@@ -121,9 +137,26 @@ def count():
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
-@click.argument("file", nargs=1, type=click.Path(exists=True))
+@click.argument("file", required=False, type=click.Path(exists=True))
+@click.option(
+    "fav",
+    "-fav",
+    type=int,
+    help="Show favorite paths or select a path to upload.",
+)
+@click.option(
+    "add_fav",
+    "--add-fav",
+    help="Register a file/folder as a favorite path.",
+)
+@click.option(
+    "del_fav",
+    "--del-fav",
+    type=int,
+    help="Delete an item from the list of favorite paths.",
+)
 @click.pass_context
-def upload(ctx, file):
+def upload(ctx, file, fav, add_fav, del_fav):
     """Upload a file.
 
     上传文件. 注意, 如果云端有同名文件, 同一天内的会直接覆盖,
@@ -133,6 +166,32 @@ def upload(ctx, file):
 
     `tempbk upload FOLDER` 上传文件夹内的最新文件
     """
+    if fav is not None:
+        if fav == 0:
+            cf_r2.print_fav(cfg)
+        else:
+            path, err = cf_r2.get_fav(fav-1, cfg)
+            print_err_exist(ctx, err)
+            upload_file(ctx, path)
+        ctx.exit()
+
+    if add_fav:
+        cf_r2.add_fav(Path(add_fav), config_file, cfg)
+        ctx.exit()
+
+    if del_fav:
+        err = cf_r2.del_fav(del_fav-1, config_file, cfg)
+        print_err(err)
+        ctx.exit()
+
+    if not file:
+        click.echo(ctx.get_help())
+        ctx.exit()
+
+    upload_file(ctx, file)
+
+
+def upload_file(ctx, file):
     filepath = Path(file)
     if filepath.is_dir():
         filepath = util.get_new_file(filepath)
@@ -143,9 +202,8 @@ def upload(ctx, file):
         if not click.confirm("要上传该文件吗?", default=True):
             ctx.exit()
 
-    if err := cf_r2.upload_file(
-            filepath, objects_summary, config_file, boto3_cfg, the_bucket):
-        print_err(err)
+    err = cf_r2.upload_file(filepath, objects_summary, config_file, cfg, the_bucket)
+    print_err(err)
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS, name="list")
@@ -193,7 +251,7 @@ def delete(ctx, prefix):
     cf_r2.print_delete_list(del_list)
     click.confirm(f"\nDelete {length} objects? (确认删除云端文件)", abort=True)
     cf_r2.delete_objects(
-        del_list, objects_summary, config_file, boto3_cfg, the_bucket)
+        del_list, objects_summary, config_file, cfg, the_bucket)
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
@@ -248,26 +306,21 @@ def download(ctx, folder, dest, prefix):
     obj = obj_list[0]
     filepath, err = cf_r2.get_download_filepath(obj['key'], dl_dir, dest)
     if err.find("文件夹不存在") >= 0:
-        print_err(err)
-        ctx.exit()
+        print_err_exist(ctx, err)
 
     if err.find("文件已存在") >= 0:
         print(err)
         click.confirm("要覆盖文件吗?", abort=True)
         err = ""
 
-    if err:
-        print(err)
-        ctx.exit()
-
+    print_err_exist(ctx, err)
     cf_r2.download_file(the_bucket, obj['key'], obj['size'], filepath)
 
 
 def download_dir_exists(ctx, folder, dest):
-    if err := cf_r2.download_dir_exists(boto3_cfg):
+    if err := cf_r2.download_dir_exists(cfg):
         if (not folder) and (not dest):
-            print_err(err)
-            ctx.exit()
+            print_err_exist(ctx, err)
 
 
 def check_download_params(ctx, folder, dest, prefix):
@@ -291,12 +344,11 @@ def set_download_dir(ctx, folder):
             ctx.exit()
 
         if not folder.exists():
-            print_err(f"文件夹不存在: {folder}")
-            ctx.exit()
+            print_err_exist(ctx, f"文件夹不存在: {folder}")
 
-        cf_r2.set_download_dir(str(folder), config_file, boto3_cfg)
+        cf_r2.set_download_dir(str(folder), config_file, cfg)
     else:
-        folder = cf_r2.get_download_dir(boto3_cfg)
+        folder = cf_r2.get_download_dir(cfg)
     return folder
 
 

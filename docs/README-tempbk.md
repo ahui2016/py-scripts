@@ -89,7 +89,7 @@ python -m pip install -e .
 
 ### 新建配置文件
 
-执行命令 `tempbk info`, 可以看到 `[boto3 config]` 的具体位置,
+执行命令 `tempbk info` 或 `tempbk -i`, 可以看到 `[boto3 config]` 的具体位置,
 请使用文本编辑器打开 `boto3-config.toml` 文件, 可以看到内容如下:
 
 ```toml
@@ -108,6 +108,7 @@ bucket = '<bucket-name>'
 ## 上传文件
 
 - 使用命令 `tempbk upload FILE` 上传文件到云端.
+- `tempbk -u FILE` 等同于 `tempbk upload FILE`
 - 上传文件体积上限默认 50MB, 防止不小心上传太大的文件.
 - 使用命令 `tempbk info` 可以查看上传文件体积上限.
 - 可以自定义上传文件体积上限, 例如 `tempbk info --set-size 25`
@@ -119,17 +120,18 @@ bucket = '<bucket-name>'
   可以自动选择该文件夹中的一个最新文件 (以最近修改时间为准),
   按回车键上传, 输入 n 回车取消.
 - 例如 `tempbk upload .` 上传当前文件夹内的最新文件.
+- `tempbk -u FOLDER` 等同于 `tempbk upload FOLDER`
 
 ### 常用路径
 
 - 使用命令 `tempbk upload --add-fav PATH` (其中 PATH 是文件或文件夹)
   可以登记一个文件或文件夹.
-- 登记后使用命令 `tempbk upload -fav` 可查看已登记列表及其编号.
-- 使用命令 `tempbk upload -fav N` (其中 N 是一个数字编号)
+- 登记后使用命令 `tempbk upload -fav 0` 可查看已登记列表及其编号.
+- 使用命令 `tempbk upload -fav N` (其中 N 是一个大于零的数字)
   相当于上传指定的文件或文件夹内的一个最新文件.
-- 使用命令 `tempbk upload --del-fav N` (其中 N 是一个数字编号)
+- 使用命令 `tempbk upload --del-fav N` (其中 N 是一个大于零的数字)
   可以删除一个文件或文件夹. **注意**: 删除操作有可能导致编号变化.
-- `tempbk -ufav` 等同于 `tempbk upload -fav`
+- `tempbk -ufav N` 等同于 `tempbk upload -fav N`
 
 ### 同名文件
 
@@ -140,11 +142,13 @@ bucket = '<bucket-name>'
 ## 统计数据
 
 - 使用命令 `tempbk count` 可查看各个月份上传了多少个文件.
+- `tempbk -c` 等同于 `tempbk count`
 - 全部文件占用的总空间大小, 请到 Cloudflare 网站查看.
 - 使用命令 `tempbk list today` 可列出今天上传的全部文件.
 - `tempbk list 202211` 列出2022年11月上传的全部文件.
 - `tempbk list 20221111` 列出2022年11月11日上传的全部文件.
 - `tempbk list 202` 列出2020年至2029年上传的全部文件.
+- `tempbk -l` 等同于 `tempbk list`
 
 ## 删除云端文件
 
@@ -152,6 +156,7 @@ bucket = '<bucket-name>'
 - `tempbk delete 202211` 删除2022年11月上传的全部文件.
 - `tempbk delete 20221111` 删除2022年11月11日上传的全部文件.
 - `tempbk delete 20221111/abc.txt` 删除2022年11月11日上传的名为 abc.txt 的文件
+- `tempbk -del` 等同于 `tempbk delete`
 
 ## 下载文件
 
@@ -163,6 +168,8 @@ bucket = '<bucket-name>'
   下载文件就会自动保存在指定的文件夹.
 - 使用命令 `tempbk info` 可以查看当前设定的下载文件夹.
 - 另外, 在 Cloudflare 网站也可以下载文件.
+- `tempbk -dl PREFIX` 等同于 `tempbk download PREFIX`  
+  但要注意, `tempbk -dl` 不能搭配 `--save-as` 或 `-dir` 使用.
 
 ## 使用代理 (http proxy)
 

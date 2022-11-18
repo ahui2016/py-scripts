@@ -4,12 +4,14 @@ from typing import Any
 import click
 
 from scripts import cf_r2, util
+from scripts.config import ensure_config_file, get_config
 from scripts.tempbk_config import config_file, default_config, default_summary
+from scripts.util import print_err, print_err_exist
 
 
 # 初始化
 VERSION = "2022-11-13"
-cf_r2.ensure_config_file(config_file, default_config())
+ensure_config_file(config_file, default_config())
 
 cfg: dict
 objects_summary: dict
@@ -17,17 +19,6 @@ s3: Any
 the_bucket: Any
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
-
-
-def print_err(err):
-    if err:
-        print(f"Error: {err}")
-
-
-def print_err_exist(ctx, err):
-    if err:
-        print(f"Error: {err}")
-        ctx.exit()
 
 
 @click.group(invoke_without_command=True)
@@ -53,7 +44,7 @@ def cli(ctx, i, c, l, u, ufav, dl, d):
     https://github.com/ahui2016/py-scripts/blob/main/docs/README-tempbk.md
     """
     global cfg, s3, the_bucket, objects_summary
-    cfg = cf_r2.get_config(config_file)
+    cfg = get_config(config_file)
     s3 = cf_r2.get_s3(cfg)
     the_bucket = cf_r2.get_bucket(s3, cfg)
     objects_summary = cf_r2.get_summary(config_file, cfg, default_summary)

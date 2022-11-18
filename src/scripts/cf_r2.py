@@ -6,11 +6,10 @@ from pathlib import Path
 
 import boto3
 import arrow
-import tomli_w
 from humanfriendly import format_size
 from botocore.config import Config
 
-from . import util
+from .config import write_config
 from .const import MB, Use_Proxy, Http_Proxy, Upload_Size_Limit, Download_Dir, \
     Objects_Summary, Fav_Paths
 
@@ -28,20 +27,6 @@ err 是 str, 有内容表示有错误, 空字符串表示没错误.
 【关于 object 与 file】
 为了便于区分, 在代码中将本地文件称为 file, 云端文件称为 object.
 """
-
-
-def ensure_config_file(cfg_file, default_config) -> None:
-    if not cfg_file.exists():
-        write_config(cfg_file, default_config)
-
-
-def write_config(cfg_file, cfg):
-    with open(cfg_file, "wb") as f:
-        tomli_w.dump(cfg, f)
-
-
-def get_config(cfg_file):
-    return util.tomli_load(cfg_file)
 
 
 def print_config(cfg_file, cfg):

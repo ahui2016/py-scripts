@@ -18,6 +18,19 @@ def tomli_load(file) -> dict:
         return tomli.loads(text)
 
 
+def print_err(err):
+    """如果有错误就打印, 没错误就忽略."""
+    if err:
+        print(f"Error: {err}")
+
+
+def print_err_exist(ctx, err):
+    """若有错误则打印并结束程序, 无错误则忽略."""
+    if err:
+        print(f"Error: {err}")
+        ctx.exit()
+
+
 def get_new_file(folder):
     """获取指定文件夹中的一个最新文件 (按修改时间排序)
 

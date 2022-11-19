@@ -1,11 +1,13 @@
 import click
 
 from scripts.config import app_config_dir
+from scripts.util import print_err, print_err_exist
 
 
 # 初始化
 VERSION = "2022-11-18"
 Config_Filename = "fav_config.txt"
+Empty_Slot = ""
 
 cfg_file_path = app_config_dir.joinpath(Config_Filename)
 default_config = [str(cfg_file_path)]
@@ -35,28 +37,79 @@ def print_config(cfg:list):
 
 
 ensure_config_file(default_config)
-fav_list: list
-
-CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
 @click.command()
 @click.help_option("-h", "--help")
+@click.argument("n", type=int, required=False)
+@click.option("-info", is_flag=True, help="Show information.")
+@click.option("-add", help="Add an item to the list.")
 @click.pass_context
-def cli(ctx):
+def cli(ctx, n, info, add):
     """Fav: 一句话收藏夹, 主要用于收藏文件/文件夹路径
 
     詳細使用方法看這裡:
 
     https://github.com/ahui2016/py-scripts/blob/main/docs/README-fav.md
     """
-    global fav_list
     fav_list = get_config()
+
+    if n is not None:
+        item, err = get_item(n-1, fav_list)
+        print_err_exist(ctx, err)
+        print(item, end='')
+        ctx.exit()
+    if info:
+        print()
+        print(f"[Fav version] {VERSION}\n")
+        print(f"[Fav main]\n{__file__}\n")
+        print(f"[Fav list]\n{cfg_file_path}\n")
+        ctx.exit()
+    if add:
+        i = add_item(add, fav_list)
+        print(f"{i+1}. {fav_list[i]}")
+        ctx.exit()
 
     print()
     print_config(fav_list)
     print()
     print("输入命令 'fav -h' 可查看使用说明.")
+
+
+def check_fav_n(n:int, cfg):
+    """参数 n 从 0 开始计数, n 等于用户输入数字减一.
+    有错误时返回错误内容, 如果返回空字符串则表示没有错误.
+    """
+    if n < 0:
+        return f"n 不可小于等于零."
+
+    length = len(cfg)
+    if n + 1 > length:
+        return f"'{n+1}' 超过列表长度({length})"
+
+    return ""
+
+
+def add_item(item:str, cfg:list) -> int:
+    """添加一行数据到列表中, 并返回其位置."""
+    if Empty_Slot in cfg:
+        i = cfg.index(Empty_Slot)
+        cfg[i] = item
+        return i
+
+    cfg.append(item)
+    write_config(cfg)
+    return len(cfg)-1
+
+
+def get_item(n, cfg) -> (str|None, str):
+    """参数 n 从 0 开始计数, n 等于用户输入数字减一.
+
+    Return (result, err)"""
+    if err := check_fav_n(n, cfg):
+        return None, err
+
+    return cfg[n], ""
 
 
 if __name__ == "__main__":

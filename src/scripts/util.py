@@ -1,3 +1,5 @@
+import sys
+
 import tomli
 
 """
@@ -21,13 +23,13 @@ def tomli_load(file) -> dict:
 def print_err(err):
     """如果有错误就打印, 没错误就忽略."""
     if err:
-        print(f"Error: {err}")
+        print(f"Error: {err}", file=sys.stderr)
 
 
 def print_err_exist(ctx, err):
     """若有错误则打印并结束程序, 无错误则忽略."""
     if err:
-        print(f"Error: {err}")
+        print(f"Error: {err}", file=sys.stderr)
         ctx.exit()
 
 

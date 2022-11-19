@@ -116,7 +116,7 @@ def info(ctx, use_proxy, size_limit):
 
     print()
     print(f"[tempbk version] {VERSION}\n")
-    print(f"[tempbk]\n{__file__}\n")
+    print(f"[tempbk main]\n{__file__}\n")
     print(f"[tempbk config]\n{config_file}\n")
     cf_r2.print_config(config_file, cfg)
 

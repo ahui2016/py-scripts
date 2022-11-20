@@ -1,5 +1,6 @@
 import sys
 
+import pyperclip
 import tomli
 
 """
@@ -44,3 +45,17 @@ def get_new_file(folder):
         return None
     files.sort(key=lambda x: x.lstat().st_mtime, reverse=True)
     return files[0]
+
+
+def clip_copy(text:str):
+    try:
+        pyperclip.copy(text)
+    except pyperclip.PyperclipException:
+        pass
+
+
+def clip_paste():
+    try:
+        pyperclip.paste()
+    except pyperclip.PyperclipException:
+        pass

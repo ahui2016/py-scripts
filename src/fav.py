@@ -1,8 +1,7 @@
 import click
 
 from scripts.config import app_config_dir
-from scripts.util import print_err, print_err_exist
-
+from scripts.util import print_err, print_err_exist, clip_copy
 
 # 初始化
 VERSION = "2022-11-18"
@@ -44,8 +43,9 @@ ensure_config_file(default_config)
 @click.argument("n", type=int, required=False)
 @click.option("-info", is_flag=True, help="Show information.")
 @click.option("-add", help="Add an item to the list.")
+@click.option("d", "-del", type=int, help="Delete an item form the list.")
 @click.pass_context
-def cli(ctx, n, info, add):
+def cli(ctx, n, info, add, d):
     """Fav: 一句话收藏夹, 主要用于收藏文件/文件夹路径
 
     詳細使用方法看這裡:
@@ -58,6 +58,7 @@ def cli(ctx, n, info, add):
         item, err = get_item(n-1, fav_list)
         print_err_exist(ctx, err)
         print(item, end='')
+        clip_copy(item)
         ctx.exit()
     if info:
         print()
@@ -68,6 +69,10 @@ def cli(ctx, n, info, add):
     if add:
         i = add_item(add, fav_list)
         print(f"{i+1}. {fav_list[i]}")
+        ctx.exit()
+    if d is not None:
+        err = del_fav(d-1, fav_list)
+        print_err(err)
         ctx.exit()
 
     print()
@@ -95,11 +100,12 @@ def add_item(item:str, cfg:list) -> int:
     if Empty_Slot in cfg:
         i = cfg.index(Empty_Slot)
         cfg[i] = item
-        return i
+    else:
+        cfg.append(item)
+        i = len(cfg) - 1
 
-    cfg.append(item)
     write_config(cfg)
-    return len(cfg)-1
+    return i
 
 
 def get_item(n, cfg) -> (str|None, str):
@@ -110,6 +116,20 @@ def get_item(n, cfg) -> (str|None, str):
         return None, err
 
     return cfg[n], ""
+
+
+def del_fav(n:int, cfg:list):
+    """参数 n 从 0 开始计数, n 等于用户输入数字减一.
+    有错误时返回错误内容, 如果返回空字符串则表示没有错误.
+    """
+    if err := check_fav_n(n, cfg):
+        return err
+
+    item = cfg[n]
+    cfg[n] = ""
+    write_config(cfg)
+    print(f"已删除 {n+1}. {item}")
+    return ""
 
 
 if __name__ == "__main__":

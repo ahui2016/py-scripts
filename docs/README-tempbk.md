@@ -64,6 +64,8 @@ $ conda activate py310
 
 解压缩后, 进入项目根目录 (有 setup.cfg 的文件夹).
 
+或者, 如果你会使用 git, 也可通过 git clone 下载源码.
+
 ### 虚拟环境
 
 可以不使用虚拟环境, 但建议使用 miniconda 或 venv 创建虚拟环境.  

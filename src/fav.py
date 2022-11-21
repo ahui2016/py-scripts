@@ -4,7 +4,7 @@ from scripts.config import app_config_dir
 from scripts.util import print_err, print_err_exist, clip_copy
 
 # 初始化
-VERSION = "2022-11-18"
+VERSION = "2022-11-22"
 Config_Filename = "fav_config.txt"
 Empty_Slot = ""
 
@@ -78,7 +78,6 @@ def cli(ctx, n, info, add, d):
     print()
     print_config(fav_list)
     print()
-    print("输入命令 'fav -h' 可查看使用说明.")
 
 
 def check_fav_n(n:int, cfg):

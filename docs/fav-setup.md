@@ -1,0 +1,128 @@
+# fav.py
+
+Fav: 一句话收藏夹, 主要用于收藏文件/文件夹路径
+
+Fav 是一个只有字符界面的命令行收藏夹, 主要用于收藏文件/文件夹路径,
+另外用来收藏常用的 命令/网址 也很合适.
+
+特点:
+
+1. 基本原理极致简单
+2. 代码非常简单
+3. 意外地好用
+
+## 安装
+
+要求 Python 3.10 或以上，如果你的系统中未安装 Python 3.10,
+推荐使用 [pyenv](https://github.com/pyenv/pyenv) 或
+[miniconda](https://docs.conda.io/en/latest/miniconda.html)
+来安装最新版本的 Python。
+
+例如，安装 miniconda 后，可以这样创建 3.10 环境：
+
+```sh
+$ conda create --name py310 python=3.10.6
+$ conda activate py310
+```
+
+在 Windows 里使用 miniconda 的方法请看 <https://geeknote.net/SuperMild/posts/1797>
+
+### 获取源代码
+
+可以通过以下其中一种方式下载代码:
+
+1. 最新代码 <https://github.com/ahui2016/py-scripts/archive/refs/heads/main.zip>
+2. 指定版本的代码 <https://github.com/ahui2016/py-scripts/releases/latest>
+
+解压缩后, 进入项目根目录 (有 setup.cfg 的文件夹).
+
+或者, 如果你会使用 git, 也可通过 git clone 下载源码.
+
+### 虚拟环境
+
+可以不使用虚拟环境, 但建议使用 miniconda 或 venv 创建虚拟环境.  
+
+### 本地安装
+
+经过上述操作, 假设你已经进入到项目根目录 (py-scripts), 此时执行
+
+```commandline
+python -m pip install -e .
+```
+
+就完成了本地安装, 在此状态下, 你可以直接修改源代码, 一切修改都会立即生效.
+(不需要重新安装)
+
+如果你在一个虚拟环境中进行本地安装, 则每次都需要进入该虚拟环境才能使用本软件.
+
+> (提示: 执行 `python -m pip uninstall .` 可以卸载)
+
+完成以上操作后, 执行命令 `fav -info`, 可以看到程序的基本信息.
+
+### py-scripts 项目
+
+上述方法会安装整个 py-scripts 项目, 包括一些其它工具, 如果你只想要 fav,
+可以看看它的核心代码 <https://github.com/ahui2016/py-scripts/blob/main/src/fav.py>
+代码很简短, 稍稍修改一下就可以改成一个独立的程序.
+
+## 用法举例
+
+- `fav -h` *(查看帮助)*
+- `fav` *(显示收藏列表)*
+- `fav -add abc@example.com` *(添加一行, 内容为 'abc@example.com')*
+- `fav 1` *(输出第一行, 包括打印及复制到剪贴板)*
+- `fav -del 3` *(删除第三行)*
+- `fav -info` *(查看版本/程序位置/数据保存位置等信息)*
+
+## 修改原始数据
+
+本程序不使用数据库, 原始数据就记录在一个文件里, 而且不是 JSON, 不是 YAML,
+不是任何特殊格式, 就是最简单的纯文本, 一行一句话.
+
+本程序提供了 `fav -add TEXT` 和 `fav -del N` 两个命令来添加句子
+和删除指定的行, 但, 事实上你完全可以打开原始数据文件, 直接在文件里
+添加或删除或修改任意内容.
+
+使用命令 `fav -info` 可查看原始数据文件的位置 (Fav list),
+然后用文本编辑器打开文件直接编辑即可, 注意必须采用 utf-8 编码.
+
+## 推荐一个字符界面文本编辑器
+
+本程序的大部分操作都需要在终端输入命令, 有时需要稍稍修改一下文件,
+如果切换到 GUI 文本编辑器去操作, 稍稍有点麻烦, 因此建议使用类似
+Vim/Emacs 的字符界面文本编辑器, 就很方便.
+
+我找到了 [micro](https://github.com/zyedidia/micro), 它类似 Vim/Emacs
+并且更轻, 也更易学易用, 优点:
+
+- 启动速度飞快, 感觉非常轻巧.
+- 非常易学易用, 支持鼠标选择和鼠标滚轮
+- 可以用 Ctrl-C / Ctrl-V 来复制黏贴.
+- 支持 Ctrl-S 保存 / Ctrl-A 全选等快捷键.
+
+## 添加句子时的注意事项
+
+使用命令 `fav -add TEXT` 添加句子时, 要注意:
+
+- 如果句子包含空格, 需要用引号包围句子.
+- 使用引号包围句子时, 要注意字符转义问题.
+
+如果遇到上述问题并且嫌处理起来麻烦, 可以直接编辑原始数据文件.
+
+### 编辑原始数据文件很方便
+
+注意, 你现在有了 fav 这个工具, 只要敲一个简单的命令 (比如 `fav 1`)
+就能获得指定文件的路径, 因此直接编辑任何文件都非常方便, 例如:
+`micro $(fav 1)`, 如果使用 vim 则是 `vim $(fav 1)`
+
+也可以先执行 `fav 1`, 对应的内容会被复制到系统剪贴板,
+然后黏贴到任何地方.
+
+## 搜索
+
+可以采用符合命令行习惯方法进行搜索, 例如:
+
+`fav |grep abcd`
+
+如果使用 [ripgrep](https://github.com/BurntSushi/ripgrep), 则是
+`fav |rg -i abcd` 其中 `-i` 表示不分大小写.

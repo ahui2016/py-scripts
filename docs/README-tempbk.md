@@ -3,7 +3,6 @@
 Temp Backup: 临时备份文件到 Cloudflare R2
 
 - 本软件通过终端输入命令上传文件到 Cloudflare R2 进行临时(短期)备份.
-- 上传前会自动加密, 下载后会自动解密
 - Cloudflare R2 的优点: 10GB 免费容量, 流量免费.
 - 本软件专门针对小文件的临时(短期)备份, 因此 10GB 免费容量够用了.
 - 我这里直连 Cloudflare 速度比较慢, 但设置代理后就很快了.
@@ -55,6 +54,8 @@ $ conda create --name py310 python=3.10.6
 $ conda activate py310
 ```
 
+在 Windows 里使用 miniconda 的方法请看 <https://geeknote.net/SuperMild/posts/1797>
+
 ### 获取源代码
 
 可以通过以下其中一种方式下载代码:
@@ -72,13 +73,14 @@ $ conda activate py310
 
 ### 本地安装
 
-经过上述操作, 假设你已经进入到项目根目录, 此时执行
+经过上述操作, 假设你已经进入到项目根目录 (py-scripts), 此时执行
 
 ```commandline
 python -m pip install -e .
 ```
 
-就完成了本地安装, 在此状态下, 你可以直接修改源代码, 一切修改都会立即生效. (不需要重新安装)
+就完成了本地安装, 在此状态下, 你可以直接修改源代码, 一切修改都会立即生效.
+(不需要重新安装)
 
 如果你在一个虚拟环境中进行本地安装, 则每次都需要进入该虚拟环境才能使用本软件.
 

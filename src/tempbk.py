@@ -10,6 +10,7 @@ from scripts.util import print_err, print_err_exist
 
 
 # 初始化
+App_Name = "tempbk"
 VERSION = "2022-11-22"
 ensure_config_file(config_file, default_config())
 
@@ -109,7 +110,7 @@ def info(ctx, use_proxy, size_limit):
     print(f"[tempbk version] {VERSION}\n")
     print(f"[tempbk main]\n{__file__}\n")
     print(f"[tempbk config]\n{config_file}\n")
-    cf_r2.print_config(config_file, cfg)
+    cf_r2.print_config(App_Name, config_file, cfg)
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
@@ -131,10 +132,6 @@ def upload(ctx, file):
 
     `tempbk upload FOLDER` 上传文件夹内的最新文件
     """
-    upload_file(ctx, file)
-
-
-def upload_file(ctx, file):
     filepath = Path(file)
     if filepath.is_dir():
         filepath = util.get_new_file(filepath)
@@ -261,7 +258,7 @@ def download(ctx, folder, dest, prefix):
 
 
 def download_dir_exists(ctx, folder, dest):
-    if err := cf_r2.download_dir_exists(cfg):
+    if err := cf_r2.download_dir_exists(App_Name, cfg):
         if (not folder) and (not dest):
             print_err_exist(ctx, err)
 

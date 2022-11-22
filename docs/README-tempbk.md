@@ -24,6 +24,8 @@ Temp Backup: 临时备份文件到 Cloudflare R2
 
 ### 生成密钥
 
+(如果已经有密钥, 就不需要再生成了.)
+
 1. 在 R2 页面可以找到 Account ID, 请复制保存, 后续有用.
 2. 在 R2 页面点击 Manage R2 API Tokens
 3. 点击 Create API Token, 权限选择 Edit, 再点击右下角的 Create API

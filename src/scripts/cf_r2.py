@@ -29,10 +29,10 @@ err 是 str, 有内容表示有错误, 空字符串表示没错误.
 """
 
 
-def print_config(cfg_file, cfg):
+def print_config(name, cfg_file, cfg):
     dl_dir = cfg.get(Download_Dir, "")
     if not dl_dir:
-        dl_dir = "(未设置下载文件夹, 设置方法请查看帮助: tempbk download -h)"
+        dl_dir = f"(未设置下载文件夹, 设置方法请查看帮助: {name} download -h)"
     print(f"[download dir]\n{dl_dir}\n")
     print(f"[upload size limit] {cfg[Upload_Size_Limit]} MB")
     print(f"[use proxy] {cfg[Use_Proxy]}")
@@ -96,14 +96,14 @@ def get_download_dir(cfg):
     return Path(cfg[Download_Dir])
 
 
-def download_dir_exists(cfg):
+def download_dir_exists(name, cfg):
     """
     :return: err: str
     """
     dl_dir = cfg.get(Download_Dir, "")
     if not dl_dir:
         return "请先设置文件夹用于保存下载文件, 例如:\n" \
-            "tempbk download -dir /path/to/folder"
+            f"{name} download -dir /path/to/folder"
     return ""
 
 

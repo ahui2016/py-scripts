@@ -1,3 +1,5 @@
+from cryptography.fernet import Fernet
+
 from . import config
 from .const import MB
 
@@ -16,4 +18,5 @@ def default_config():
         upload_size_limit     = 50 * MB,
         http_proxy            = 'http://127.0.0.1:1081',
         use_proxy             = False,
+        secret_key            = Fernet.generate_key().hex(),
     )

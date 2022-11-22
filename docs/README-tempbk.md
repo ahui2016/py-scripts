@@ -46,15 +46,15 @@ Access Key ID 和 Secret Access Key 只显示一次, 请立即复制保存
 
 tempbk 是 py-scripts 的一部分, 安装方法详见 [py-scripts/README.md](../README.md)
 
-安装完成后, 执行命令 `tempbk info`, 可以看到配置文件的具体位置,
+安装完成后, 执行命令 `tempbk -info`, 可以看到配置文件的具体位置,
 接下来需要打开配置文件填写信息, 详见下一节.
 
 ### 配置
 
 ### 新建配置文件
 
-执行命令 `tempbk info` 或 `tempbk -i`, 可以看到 `[boto3 config]` 的具体位置,
-请使用文本编辑器打开 `boto3-config.toml` 文件, 可以看到内容如下:
+执行命令 `tempbk -info`, 可以看到 `[tempbk config]` 的具体位置,
+请使用文本编辑器打开 `tempbk_config.toml` 文件, 可以看到内容如下:
 
 ```toml
 endpoint_url = 'https://<accountid>.r2.cloudflarestorage.com'
@@ -74,8 +74,8 @@ bucket = '<bucket-name>'
 - 使用命令 `tempbk upload FILE` 上传文件到云端.
 - `tempbk -u FILE` 等同于 `tempbk upload FILE`
 - 上传文件体积上限默认 50MB, 防止不小心上传太大的文件.
-- 使用命令 `tempbk info` 可以查看上传文件体积上限.
-- 可以自定义上传文件体积上限, 例如 `tempbk info --set-size 25`
+- 使用命令 `tempbk -info` 可以查看上传文件体积上限.
+- 可以自定义上传文件体积上限, 例如 `tempbk --set-size 25`
   将上限设为 25MB
 
 ### 自动选择一个最新文件
@@ -119,7 +119,7 @@ bucket = '<bucket-name>'
   `tempbk download -dir /path/to/folder`  
   只需要设置一次, 后续使用命令 `tempbk download 20221111/abc.txt`
   下载文件就会自动保存在指定的文件夹.
-- 使用命令 `tempbk info` 可以查看当前设定的下载文件夹.
+- 使用命令 `tempbk -info` 可以查看当前设定的下载文件夹.
 - 另外, 在 Cloudflare 网站也可以下载文件.
 - `tempbk -dl PREFIX` 等同于 `tempbk download PREFIX`  
   但要注意, `tempbk -dl` 不能搭配 `--save-as` 或 `-dir` 使用.
@@ -127,11 +127,11 @@ bucket = '<bucket-name>'
 ## 使用代理 (http proxy)
 
 - 默认不使用代理.
-- 使用命令 `tempbk info --use-proxy true` 可设置为使用代理.  
+- 使用命令 `tempbk --use-proxy true` 可设置为使用代理.  
   其中 `true` 也可以是 `1`(壹) 或 `on`.
 - 在上面的命令中, 如果输入参数不是 `true`, `1`, `on`, 而是其它任何文字,
   则会设置为不使用代理.
-- 默认代理地址是 `http://127.0.0.1:1081`, 可通过命令 `tempbk info`
+- 默认代理地址是 `http://127.0.0.1:1081`, 可通过命令 `tempbk -info`
   找到 boto3 config 文件的位置, 用文本编辑器打开它, 修改 http proxy.
 
 ## TODO

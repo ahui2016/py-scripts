@@ -24,15 +24,34 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 @click.group(invoke_without_command=True)
 @click.help_option("-h", "--help")
-@click.option("i", "-i", "-v", "-V", is_flag=True, help="Show information.")
+@click.option("info", "-info", "-v", "-V", is_flag=True, help="Show information.")
+@click.option(
+    "use_proxy",
+    "--use-proxy",
+    help="Set '1' or 'on' or 'true' to use proxy.",
+)
+@click.option(
+    "size_limit",
+    "--set-size",
+    type=int,
+    help="Set upload size limit (unit: MB).",
+)
 @click.option("c", "-c", is_flag=True, help="Count files uploaded.")
 @click.option("l", "-l", help="List objects by prefix.")
 @click.option("u", "-u", help="Upload a file.")
 @click.option("dl", "-dl", help="Download a file.")
 @click.option("d", "-del", help="Delete objects by prefix.")
 @click.pass_context
-def cli(ctx, i, c, l, u, dl, d):
+def cli(ctx, info, use_proxy, size_limit, c, l, u, dl, d):
     """Temp Backup: 臨時備份文件
+
+    Example:
+
+    tempbk --set-size 25 (设置上传文件体积上限为 25 MB)
+
+    tempbk --use-proxy off (不使用代理)
+
+    tempbk --use-proxy true (使用代理)
 
     詳細使用方法看這裡:
 
@@ -40,13 +59,27 @@ def cli(ctx, i, c, l, u, dl, d):
     """
     global cfg, s3, the_bucket, objects_summary
     cfg = get_config(config_file)
+
+    if info:
+        print()
+        print(f"[tempbk version] {VERSION}\n")
+        print(f"[tempbk main]\n{__file__}\n")
+        print(f"[tempbk config]\n{config_file}\n")
+        cf_r2.print_config(App_Name, config_file, cfg)
+        print()
+        ctx.exit()
+
+    if use_proxy:
+        cf_r2.set_use_proxy(use_proxy, cfg, config_file)
+    if size_limit:
+        cf_r2.set_size_limit(size_limit, config_file, cfg)
+    if use_proxy or size_limit:
+        ctx.exit()
+
     s3 = cf_r2.get_s3(cfg)
     the_bucket = cf_r2.get_bucket(s3, cfg)
     objects_summary = cf_r2.get_summary(config_file, cfg, default_summary)
 
-    if i:
-        ctx.invoke(info)
-        ctx.exit()
     if c:
         ctx.invoke(count)
         ctx.exit()
@@ -73,44 +106,6 @@ def cli(ctx, i, c, l, u, dl, d):
 ------------
 以下是子命令
 """
-
-
-@cli.command(context_settings=CONTEXT_SETTINGS)
-@click.option(
-    "use_proxy",
-    "--use-proxy",
-    help="Set '1' or 'on' or 'true' to use proxy.",
-)
-@click.option(
-    "size_limit",
-    "--set-size",
-    type=int,
-    help="Set upload size limit (unit: MB).",
-)
-@click.pass_context
-def info(ctx, use_proxy, size_limit):
-    """Show or set information.
-
-    Example:
-
-    tempbk info --set-size 25 (设置上传文件体积上限为 25 MB)
-
-    tempbk info --use-proxy off (不使用代理)
-
-    tempbk info --use-proxy true (使用代理)
-    """
-    if use_proxy:
-        cf_r2.set_use_proxy(use_proxy, cfg, config_file)
-    if size_limit:
-        cf_r2.set_size_limit(size_limit, config_file, cfg)
-    if use_proxy or size_limit:
-        ctx.exit()
-
-    print()
-    print(f"[tempbk version] {VERSION}\n")
-    print(f"[tempbk main]\n{__file__}\n")
-    print(f"[tempbk config]\n{config_file}\n")
-    cf_r2.print_config(App_Name, config_file, cfg)
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)

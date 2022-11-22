@@ -39,13 +39,15 @@ def cli(ctx, i, c, l, u, dl, d):
     """
     global cfg, s3, the_bucket, objects_summary
     cfg = get_config(config_file)
-    s3 = cf_r2.get_s3(cfg)
-    the_bucket = cf_r2.get_bucket(s3, cfg)
-    objects_summary = cf_r2.get_summary(config_file, cfg, default_summary)
 
     if i:
         ctx.invoke(info)
         ctx.exit()
+
+    s3 = cf_r2.get_s3(cfg)
+    the_bucket = cf_r2.get_bucket(s3, cfg)
+    objects_summary = cf_r2.get_summary(config_file, cfg, default_summary)
+
     if c:
         ctx.invoke(count)
         ctx.exit()
@@ -108,8 +110,10 @@ def info(ctx, use_proxy, size_limit):
     print()
     print(f"[tbk version] {VERSION}\n")
     print(f"[tbk main]\n{__file__}\n")
-    print(f"[tbk config]\n{config_file}\n")
+    print(f"[tbk config]\n{config_file}")
+    print("(注意: 请妥善保存 tbk config 文件中的 secret_key, 一旦丢失则无法解密.)\n")
     cf_r2.print_config(App_Name, config_file, cfg)
+    print()
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)

@@ -1,5 +1,4 @@
 from . import config
-from .const import MB
 
 Config_Filename = "tempbk_config.toml"
 default_summary = {}
@@ -13,7 +12,7 @@ def default_config():
         aws_secret_access_key = '<access_key_secret>',
         bucket_name           = '<bucket_name>',
         download_dir          = '',
-        upload_size_limit     = 50 * MB,
+        upload_size_limit     = 50,
         http_proxy            = 'http://127.0.0.1:1081',
         use_proxy             = False,
     )

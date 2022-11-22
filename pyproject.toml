@@ -23,4 +23,5 @@ Home = "https://github.com/ahui2016/py-scripts"
 
 [project.scripts]
 tempbk = "tempbk:cli"
+tbk    = "tbk:cli"
 fav    = "fav:cli"

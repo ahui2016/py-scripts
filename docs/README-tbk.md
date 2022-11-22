@@ -46,6 +46,6 @@ Access Key ID 和 Secret Access Key 只显示一次, 请立即复制保存
 
 tbk 是 py-scripts 的一部分, 安装方法详见 [py-scripts/README.md](../README.md)
 
-安装完成后, 执行命令 `tbk info`, 可以看到配置文件的具体位置,
+安装完成后, 执行命令 `tbk -info`, 可以看到配置文件的具体位置,
 接下来需要打开配置文件填写信息, 详见下一节.
 

@@ -126,17 +126,6 @@ bucket = '<bucket-name>'
 - 例如 `tempbk upload .` 上传当前文件夹内的最新文件.
 - `tempbk -u FOLDER` 等同于 `tempbk upload FOLDER`
 
-### 常用路径
-
-- 使用命令 `tempbk upload --add-fav PATH` (其中 PATH 是文件或文件夹)
-  可以登记一个文件或文件夹.
-- 登记后使用命令 `tempbk upload -fav 0` 可查看已登记列表及其编号.
-- 使用命令 `tempbk upload -fav N` (其中 N 是一个大于零的数字)
-  相当于上传指定的文件或文件夹内的一个最新文件.
-- 使用命令 `tempbk upload --del-fav N` (其中 N 是一个大于零的数字)
-  可以删除一个文件或文件夹. **注意**: 删除操作有可能导致编号变化.
-- `tempbk -ufav N` 等同于 `tempbk upload -fav N`
-
 ### 同名文件
 
 - 在同一天内多次上传同名文件, 新上传的文件会覆盖旧文件.

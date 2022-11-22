@@ -11,7 +11,7 @@ from botocore.config import Config
 
 from .config import write_config
 from .const import MB, Use_Proxy, Http_Proxy, Upload_Size_Limit, Download_Dir, \
-    Objects_Summary, Fav_Paths
+    Objects_Summary
 
 
 """
@@ -84,67 +84,6 @@ def set_size_limit(limit, cfg_file, cfg):
 
 def get_size_limit(cfg):
     return cfg[Upload_Size_Limit] * MB
-
-
-def print_fav(cfg):
-    if (Fav_Paths not in cfg) or (len(cfg[Fav_Paths]) == 0):
-        print("尚未登记任何路径.")
-        return
-
-    n = 1
-    for item in cfg[Fav_Paths]:
-        print(f"{n}. {item}")
-        n += 1
-
-
-def check_fav_n(n:int, cfg):
-    """参数 n 从 0 开始计数, n 等于用户输入数字减一.
-    有错误时返回错误内容, 如果返回空字符串则表示没有错误.
-    """
-    if (Fav_Paths not in cfg) or (len(cfg[Fav_Paths]) == 0):
-        return "尚未登记任何路径."
-    if n < 0:
-        return f"n 不可小于零."
-    length = len(cfg[Fav_Paths])
-    if n + 1 > length:
-        return f"'{n+1}' 超过已登记路径的数量({length})"
-    return ""
-
-
-def get_fav(n, cfg) -> (Path|None, str):
-    """参数 n 从 0 开始计数, n 等于用户输入数字减一.
-
-    Return (result, err)"""
-    if err := check_fav_n(n, cfg):
-        return None, err
-
-    fav = cfg[Fav_Paths][n]
-    return Path(fav), ""
-
-
-def add_fav(fav_path:Path, cfg_file, cfg):
-    if Fav_Paths not in cfg:
-        cfg[Fav_Paths] = []
-    cfg[Fav_Paths].append(str(fav_path.resolve()))
-    write_config(cfg_file, cfg)
-    print_fav(cfg)
-
-
-def del_fav(n:int, cfg_file, cfg):
-    """参数 n 从 0 开始计数, n 等于用户输入数字减一.
-    有错误时返回错误内容, 如果返回空字符串则表示没有错误.
-    """
-    if err := check_fav_n(n, cfg):
-        return err
-
-    del cfg[Fav_Paths][n]
-    write_config(cfg_file, cfg)
-
-    if len(cfg[Fav_Paths]) == 0:
-        print("已清空路径列表")
-    else:
-        print_fav(cfg)
-    return ""
 
 
 def set_download_dir(dir_path:str, cfg_file, cfg):

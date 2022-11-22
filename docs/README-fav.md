@@ -31,7 +31,7 @@ C:\User\XiaoMei\
 3. C:\User\XiaoMei\abc.txt
 ```
 
-执行命令 `fav 2` 会在屏幕上打印 'https://example.com', 同时复制到剪贴板.
+执行命令 `fav 2` 会在屏幕上打印 `https://example.com`, 同时复制到剪贴板.
 
 执行命令 `vim $(fav 3)` 相当于执行 `vim C:\User\XiaoMei\abc.txt`
 
@@ -43,14 +43,14 @@ C:\User\XiaoMei\
 3. C:\User\XiaoMei\abc.txt
 ```
 
-**重点: 序号与内容的对应关系不会变**, 这点非常重要.
+**重点: 序号与内容的对应关系不会变**, 这是本程序的最重要的特性.
 
-后续新增内容会自动填补空缺.
+后续使用命令 `fav -add` 新增内容会自动填补空缺.
 
 如果要改变顺序, 或修改其中一行的内容, 可以直接打开原始数据文件, 直接修改即可.
 
 例如, 假设第 3 行就是原始数据文件的路径, 那么执行命令
-`vim $(fav 3)` 或 `EmEditor $(fav 3)` 即可打开文件, 非常方便.
+`vim $(fav 3)` 就相当于执行 `vim C:\User\XiaoMei\abc.txt`, 非常方便.
 
 执行命令 `fav -info` 可以找到原始数据文件的位置, 使用命令
 `fav -add /path/to/file.txt` (其中 '/path/to/file.txt' 改为具体的文件路径)
@@ -60,7 +60,7 @@ C:\User\XiaoMei\
 
 本程序的源代码基本上就是一个文件 <https://github.com/ahui2016/py-scripts/blob/main/src/fav.py>
 
-大概 100 行多点, 极致简单, 下面介绍了通过源码进行本地安装的方法,
+全部代码只有 100 行左右, 极致简单, 下面介绍了通过源码进行本地安装的方法,
 另外你也可以采用其它方法, 比如自己打包发布到 PyPI.
 
 ## 安装与使用

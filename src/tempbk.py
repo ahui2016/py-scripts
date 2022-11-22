@@ -10,7 +10,7 @@ from scripts.util import print_err, print_err_exist
 
 
 # 初始化
-VERSION = "2022-11-13"
+VERSION = "2022-11-22"
 ensure_config_file(config_file, default_config())
 
 cfg: dict
@@ -27,16 +27,10 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 @click.option("c", "-c", is_flag=True, help="Count files uploaded.")
 @click.option("l", "-l", help="List objects by prefix.")
 @click.option("u", "-u", help="Upload a file.")
-@click.option(
-    "ufav",
-    "-ufav",
-    type=int,
-    help="Show favorite paths or select a path to upload.",
-)
 @click.option("dl", "-dl", help="Download a file.")
 @click.option("d", "-del", help="Delete objects by prefix.")
 @click.pass_context
-def cli(ctx, i, c, l, u, ufav, dl, d):
+def cli(ctx, i, c, l, u, dl, d):
     """Temp Backup: 臨時備份文件
 
     詳細使用方法看這裡:
@@ -60,9 +54,6 @@ def cli(ctx, i, c, l, u, ufav, dl, d):
         ctx.exit()
     if u:
         ctx.invoke(upload, file=u)
-        ctx.exit()
-    if ufav is not None:
-        ctx.invoke(upload, fav=ufav)
         ctx.exit()
     if dl:
         ctx.invoke(download, prifix=dl)
@@ -128,26 +119,9 @@ def count():
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
-@click.argument("file", required=False, type=click.Path(exists=True))
-@click.option(
-    "fav",
-    "-fav",
-    type=int,
-    help="Show favorite paths or select a path to upload.",
-)
-@click.option(
-    "add_fav",
-    "--add-fav",
-    help="Register a file/folder as a favorite path.",
-)
-@click.option(
-    "del_fav",
-    "--del-fav",
-    type=int,
-    help="Delete an item from the list of favorite paths.",
-)
+@click.argument("file", type=click.Path(exists=True))
 @click.pass_context
-def upload(ctx, file, fav, add_fav, del_fav):
+def upload(ctx, file):
     """Upload a file.
 
     上传文件. 注意, 如果云端有同名文件, 同一天内的会直接覆盖,
@@ -157,28 +131,6 @@ def upload(ctx, file, fav, add_fav, del_fav):
 
     `tempbk upload FOLDER` 上传文件夹内的最新文件
     """
-    if fav is not None:
-        if fav == 0:
-            cf_r2.print_fav(cfg)
-        else:
-            path, err = cf_r2.get_fav(fav-1, cfg)
-            print_err_exist(ctx, err)
-            upload_file(ctx, path)
-        ctx.exit()
-
-    if add_fav:
-        cf_r2.add_fav(Path(add_fav), config_file, cfg)
-        ctx.exit()
-
-    if del_fav:
-        err = cf_r2.del_fav(del_fav-1, config_file, cfg)
-        print_err(err)
-        ctx.exit()
-
-    if not file:
-        click.echo(ctx.get_help())
-        ctx.exit()
-
     upload_file(ctx, file)
 
 

@@ -90,7 +90,7 @@ def cli(ctx, info, use_proxy, size_limit, c, l, u, dl, d):
         ctx.invoke(upload, file=u)
         ctx.exit()
     if dl:
-        ctx.invoke(download, prifix=dl)
+        ctx.invoke(download, prefix=dl)
         ctx.exit()
     if d:
         ctx.invoke(delete, prefix=d)
@@ -220,26 +220,19 @@ def download(ctx, folder, dest, prefix):
 
     tempbk download 20221111/abc.txt --save-as /path/to/cde.txt
     """
-    check_download_params(ctx, folder, dest, prefix)
+    cf_r2.check_download_params(ctx, folder, dest, prefix)
     download_dir_exists(ctx, folder, dest)
-    dl_dir = set_download_dir(ctx, folder)
-    dest = get_download_dest(ctx, dest, prefix)
+    cf_r2.set_download_dir(ctx, folder, config_file, cfg)
 
-    # 经过上述处理后，此时 prefix 一定有内容。
-    objects = cf_r2.get_objects_by_prefix(prefix, the_bucket)
-    obj_list = cf_r2.objects_to_list(objects)
-    length = len(obj_list)
-    if length == 0:
-        print(f"Not Found: {prefix}")
-        print("(注意, 必须以日期前缀开头, 并且文件名区分大小写)")
-        ctx.exit()
-    if length > 1:
-        print("每次只能下载一个文件:\n")
-        cf_r2.print_objects_with_size(obj_list)
+    if not prefix:
+        print(
+            "下载指定前缀的云端文件(必须包含日期前缀), 例如:\n"
+            f"tbk download 20221111/abc.txt --save-as {dest}"
+        )
         ctx.exit()
 
-    obj = obj_list[0]
-    filepath, err = cf_r2.get_download_filepath(obj['key'], dl_dir, dest)
+    # 正式下载.
+    obj, filepath, err = cf_r2.get_obj_filepath(ctx, dest, prefix, the_bucket, cfg)
     if err.find("文件夹不存在") >= 0:
         print_err_exist(ctx, err)
 
@@ -256,57 +249,6 @@ def download_dir_exists(ctx, folder, dest):
     if err := cf_r2.download_dir_exists(App_Name, cfg):
         if (not folder) and (not dest):
             print_err_exist(ctx, err)
-
-
-def check_download_params(ctx, folder, dest, prefix):
-    if (not folder) and (not dest) and (not prefix):
-        print(
-            "下载指定前缀的云端文件(必须包含日期前缀), 例如:\n"
-            "tempbk download 20221111/abc.txt"
-        )
-        ctx.exit()
-
-
-def set_download_dir(ctx, folder):
-    """设置下载文件夹，并返回该文件夹的路径。"""
-    if folder:
-        folder = Path(folder).resolve()
-        if folder.is_file():
-            print_err(
-                f'"{folder}" 是文件\n'
-                "使用 -dir 参数时, 请指定一个文件夹"
-            )
-            ctx.exit()
-
-        if not folder.exists():
-            print_err_exist(ctx, f"文件夹不存在: {folder}")
-
-        cf_r2.set_download_dir(str(folder), config_file, cfg)
-    else:
-        folder = cf_r2.get_download_dir(cfg)
-    return folder
-
-
-def get_download_dest(ctx, dest, prefix):
-    if dest and not prefix:
-        print(
-            "下载指定前缀的云端文件(必须包含日期前缀), 例如:\n"
-            f"tempbk download 20221111/abc.txt --save-as {dest}"
-        )
-        ctx.exit()
-
-    if not dest:
-        dest = None
-    else:
-        dest = Path(dest)
-        if dest.is_dir():
-            print_err(
-                f'"{dest}" 是文件夹\n'
-                "使用 --save-as 参数时, 请指定一个文件名"
-            )
-            ctx.exit()
-
-    return dest
 
 
 if __name__ == "__main__":

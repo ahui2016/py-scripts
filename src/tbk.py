@@ -23,15 +23,28 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 @click.group(invoke_without_command=True)
 @click.help_option("-h", "--help")
-@click.option("i", "-i", "-v", "-V", is_flag=True, help="Show information.")
+@click.option(
+    "info", "-info", "-v", "-V", is_flag=True, help="Show information.")
+@click.option(
+    "use_proxy", "--use-proxy", help="Set '1' or 'on' or 'true' to use proxy.")
+@click.option(
+    "size", "--set-size", type=int, help="Set upload size limit (unit: MB).")
 @click.option("c", "-c", is_flag=True, help="Count files uploaded.")
 @click.option("l", "-l", help="List objects by prefix.")
 @click.option("u", "-u", help="Upload a file.")
 @click.option("dl", "-dl", help="Download a file.")
 @click.option("d", "-del", help="Delete objects by prefix.")
 @click.pass_context
-def cli(ctx, i, c, l, u, dl, d):
+def cli(ctx, info, use_proxy, size, c, l, u, dl, d):
     """Temp Backup (secure): 加密并备份文件到 Cloudflare R2
+
+    Example:
+
+    tbk --set-size 25 (设置上传文件体积上限为 25 MB)
+
+    tbk --use-proxy off (不使用代理)
+
+    tbk --use-proxy true (使用代理)
 
     詳細使用方法看這裡:
 
@@ -40,8 +53,21 @@ def cli(ctx, i, c, l, u, dl, d):
     global cfg, s3, the_bucket, objects_summary
     cfg = get_config(config_file)
 
-    if i:
-        ctx.invoke(info)
+    if info:
+        print()
+        print(f"[tbk version] {VERSION}\n")
+        print(f"[tbk main]\n{__file__}\n")
+        print(f"[tbk config]\n{config_file}")
+        print("(注意: 请妥善保存 tbk config 文件中的 secret_key, 一旦丢失则无法解密.)\n")
+        cf_r2.print_config(App_Name, config_file, cfg)
+        print()
+        ctx.exit()
+
+    if use_proxy:
+        cf_r2.set_use_proxy(use_proxy, cfg, config_file)
+    if size:
+        cf_r2.set_size_limit(size, config_file, cfg)
+    if use_proxy or size:
         ctx.exit()
 
     s3 = cf_r2.get_s3(cfg)
@@ -58,7 +84,7 @@ def cli(ctx, i, c, l, u, dl, d):
         ctx.invoke(upload, file=u)
         ctx.exit()
     if dl:
-        ctx.invoke(download, prifix=dl)
+        ctx.invoke(download, prefix=dl)
         ctx.exit()
     if d:
         ctx.invoke(delete, prefix=d)
@@ -74,46 +100,6 @@ def cli(ctx, i, c, l, u, dl, d):
 ------------
 以下是子命令
 """
-
-
-@cli.command(context_settings=CONTEXT_SETTINGS)
-@click.option(
-    "use_proxy",
-    "--use-proxy",
-    help="Set '1' or 'on' or 'true' to use proxy.",
-)
-@click.option(
-    "size_limit",
-    "--set-size",
-    type=int,
-    help="Set upload size limit (unit: MB).",
-)
-@click.pass_context
-def info(ctx, use_proxy, size_limit):
-    """Show or set information.
-
-    Example:
-
-    tbk info --set-size 25 (设置上传文件体积上限为 25 MB)
-
-    tbk info --use-proxy off (不使用代理)
-
-    tbk info --use-proxy true (使用代理)
-    """
-    if use_proxy:
-        cf_r2.set_use_proxy(use_proxy, cfg, config_file)
-    if size_limit:
-        cf_r2.set_size_limit(size_limit, config_file, cfg)
-    if use_proxy or size_limit:
-        ctx.exit()
-
-    print()
-    print(f"[tbk version] {VERSION}\n")
-    print(f"[tbk main]\n{__file__}\n")
-    print(f"[tbk config]\n{config_file}")
-    print("(注意: 请妥善保存 tbk config 文件中的 secret_key, 一旦丢失则无法解密.)\n")
-    cf_r2.print_config(App_Name, config_file, cfg)
-    print()
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
@@ -229,33 +215,26 @@ def download(ctx, folder, dest, prefix):
 
     tbk download 20221111/abc.txt --save-as /path/to/cde.txt
     """
-    check_download_params(ctx, folder, dest, prefix)
+    cf_r2.check_download_params(ctx, folder, dest, prefix)
     download_dir_exists(ctx, folder, dest)
-    dl_dir = set_download_dir(ctx, folder)
-    dest = get_download_dest(ctx, dest, prefix)
+    cf_r2.set_download_dir(ctx, folder, config_file, cfg)
 
-    # 经过上述处理后，此时 prefix 一定有内容。
-    objects = cf_r2.get_objects_by_prefix(prefix, the_bucket)
-    obj_list = cf_r2.objects_to_list(objects)
-    length = len(obj_list)
-    if length == 0:
-        print(f"Not Found: {prefix}")
-        print("(注意, 必须以日期前缀开头, 并且文件名区分大小写)")
-        ctx.exit()
-    if length > 1:
-        print("每次只能下载一个文件:\n")
-        cf_r2.print_objects_with_size(obj_list)
+    if not prefix:
+        print(
+            "下载指定前缀的云端文件(必须包含日期前缀), 例如:\n"
+            f"tbk download 20221111/abc.txt --save-as {dest}"
+        )
         ctx.exit()
 
-    obj = obj_list[0]
-    filepath, err = cf_r2.get_download_filepath(obj['key'], dl_dir, dest)
+    # 正式下载.
+    obj, filepath, err = cf_r2.get_obj_filepath(ctx, dest, prefix, the_bucket, cfg)
     if err.find("文件夹不存在") >= 0:
         print_err_exist(ctx, err)
 
     if err.find("文件已存在") >= 0:
         print(err)
-        click.confirm("要覆盖文件吗?", abort=True)
         err = ""
+        click.confirm("要覆盖文件吗?", abort=True)
 
     print_err_exist(ctx, err)
     cf_r2_secure.download_file(
@@ -266,57 +245,6 @@ def download_dir_exists(ctx, folder, dest):
     if err := cf_r2.download_dir_exists(App_Name, cfg):
         if (not folder) and (not dest):
             print_err_exist(ctx, err)
-
-
-def check_download_params(ctx, folder, dest, prefix):
-    if (not folder) and (not dest) and (not prefix):
-        print(
-            "下载指定前缀的云端文件(必须包含日期前缀), 例如:\n"
-            "tbk download 20221111/abc.txt"
-        )
-        ctx.exit()
-
-
-def set_download_dir(ctx, folder):
-    """设置下载文件夹，并返回该文件夹的路径。"""
-    if folder:
-        folder = Path(folder).resolve()
-        if folder.is_file():
-            print_err(
-                f'"{folder}" 是文件\n'
-                "使用 -dir 参数时, 请指定一个文件夹"
-            )
-            ctx.exit()
-
-        if not folder.exists():
-            print_err_exist(ctx, f"文件夹不存在: {folder}")
-
-        cf_r2.set_download_dir(str(folder), config_file, cfg)
-    else:
-        folder = cf_r2.get_download_dir(cfg)
-    return folder
-
-
-def get_download_dest(ctx, dest, prefix):
-    if dest and not prefix:
-        print(
-            "下载指定前缀的云端文件(必须包含日期前缀), 例如:\n"
-            f"tbk download 20221111/abc.txt --save-as {dest}"
-        )
-        ctx.exit()
-
-    if not dest:
-        dest = None
-    else:
-        dest = Path(dest)
-        if dest.is_dir():
-            print_err(
-                f'"{dest}" 是文件夹\n'
-                "使用 --save-as 参数时, 请指定一个文件名"
-            )
-            ctx.exit()
-
-    return dest
 
 
 if __name__ == "__main__":

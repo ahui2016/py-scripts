@@ -9,6 +9,7 @@ import arrow
 from humanfriendly import format_size
 from botocore.config import Config
 
+from scripts.util import print_err, print_err_exist
 from .config import write_config
 from .const import MB, Use_Proxy, Http_Proxy, Upload_Size_Limit, Download_Dir, \
     Objects_Summary
@@ -84,12 +85,6 @@ def set_size_limit(limit, cfg_file, cfg):
 
 def get_size_limit(cfg):
     return cfg[Upload_Size_Limit] * MB
-
-
-def set_download_dir(dir_path:str, cfg_file, cfg):
-    cfg[Download_Dir] = dir_path
-    write_config(cfg_file, cfg)
-    print(f"设置成功, 下载文件默认保存至 {dir_path}")
 
 
 def get_download_dir(cfg):
@@ -282,6 +277,72 @@ def download_file(bucket, obj_name, size, filepath):
     bucket.download_file(
         obj_name, str(filepath), Callback=DownloadProgress(obj_name, size)
     )
+
+
+def check_download_params(ctx, folder, dest, prefix):
+    if (not folder) and (not dest) and (not prefix):
+        print(
+            "下载指定前缀的云端文件(必须包含日期前缀), 例如:\n"
+            "tbk download 20221111/abc.txt"
+        )
+        ctx.exit()
+
+
+def set_download_dir(ctx, folder, cfg_file, cfg):
+    if not folder:
+        return
+
+    folder = Path(folder).resolve()
+    if folder.is_file():
+        print_err(
+            f'"{folder}" 是文件\n'
+            "使用 -dir 参数时, 请指定一个文件夹"
+        )
+        ctx.exit()
+
+    if not folder.exists():
+        print_err_exist(ctx, f"文件夹不存在: {folder}")
+
+    folder_str = str(folder)
+    cfg[Download_Dir] = folder_str
+    write_config(cfg_file, cfg)
+    print(f"设置成功, 下载文件默认保存至 {folder_str}")
+    ctx.exit()
+
+
+def get_download_dest(ctx, dest):
+    if not dest:
+        dest = None
+    else:
+        dest = Path(dest)
+        if dest.is_dir():
+            print_err(
+                f'"{dest}" 是文件夹\n'
+                "使用 --save-as 参数时, 请指定一个文件名"
+            )
+            ctx.exit()
+
+    return dest
+
+
+def get_obj_filepath(ctx, dest, prefix, the_bucket, cfg):
+    dl_dir = get_download_dir(cfg)
+    dest =get_download_dest(ctx, dest)
+    objects = get_objects_by_prefix(prefix, the_bucket)
+    obj_list = objects_to_list(objects)
+    length = len(obj_list)
+    if length == 0:
+        print(f"Not Found: {prefix}")
+        print("(注意, 必须以日期前缀开头, 并且文件名区分大小写)")
+        ctx.exit()
+    if length > 1:
+        print("每次只能下载一个文件:\n")
+        print_objects_with_size(obj_list)
+        ctx.exit()
+
+    obj = obj_list[0]
+    filepath, err = get_download_filepath(obj['key'], dl_dir, dest)
+    return obj, filepath, err
 
 
 # https://boto3.amazonaws.com/v1/documentation/api/latest/guide/s3-uploading-files.html

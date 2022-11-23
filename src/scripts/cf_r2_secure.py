@@ -1,4 +1,6 @@
 import io
+import sys
+import threading
 from pathlib import Path
 
 from cryptography.fernet import Fernet
@@ -9,6 +11,7 @@ from .const import Secret_Key
 """
 參考:
 https://developers.cloudflare.com/r2/examples/boto3/
+https://cryptography.io/en/latest/fernet/
 """
 
 """
@@ -63,5 +66,5 @@ def download_file(bucket, obj_name, size, filepath:Path, cfg):
     data = io.BytesIO()
     bucket.download_fileobj(
         obj_name, data, Callback=cf_r2.DownloadProgress(obj_name, size))
-    file_data = decrypt(data.read(), cfg)
+    file_data = decrypt(data.getvalue(), cfg)
     filepath.write_bytes(file_data)

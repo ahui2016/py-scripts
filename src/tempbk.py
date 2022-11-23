@@ -11,7 +11,7 @@ from scripts.util import print_err, print_err_exist
 
 # 初始化
 App_Name = "tempbk"
-VERSION = "2022-11-22"
+VERSION = "2022-11-23"
 ensure_config_file(config_file, default_config())
 
 cfg: dict

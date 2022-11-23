@@ -30,6 +30,23 @@ Temp Backup: 临时备份文件到 Cloudflare R2
 
 文档: [README-tempbk.md](./docs/README-tempbk.md)
 
+## tbk
+
+Temp Backup (secure): 加密并备份文件到 Cloudflare R2
+
+tbk 与 tempbk 的功能几乎一模一样, 主要是加密与不加密的区别.
+
+- **tbk**(加密):
+  - 可以防止云端分析文件
+  - 一旦丢失密钥就无法解密
+  - 用 tbk 上传的文件, 通常要用 tbk 下载才方便解密
+  - 加密后文件体积会增大约 30%
+- **tempbk**(不加密):
+  - 不能防止云端分析文件, 有一定法律风险或云端泄密风险 
+  - 用 tempbk 上传的文件, 除了可以用 tempbk 下载, 还可以去 Cloudflare 网站下载
+
+文档: [README-tbk.md](./docs/README-tbk.md)
+
 ## 安装方法
 
 这个项目我选择了本地安装的方式, 因为:
@@ -39,7 +56,7 @@ Temp Backup: 临时备份文件到 Cloudflare R2
 
 另外, 如果你想通过 pip 命令安装, 你也可以自行打包发布到 PyPI 
 
-安装本项目会一次性安装全部命令, 如果你只想要其中一两个命令,
+安装本项目会一次性得到 fav, tempbk, tbk 等全部工具, 如果你只想要其中一两个命令,
 可自行研究源代码将想要的功能独立出来 (代码都很简单, 有疑问可以问我).
 
 ## 环境要求

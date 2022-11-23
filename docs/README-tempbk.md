@@ -51,8 +51,6 @@ tempbk 是 py-scripts 的一部分, 安装方法详见 [py-scripts/README.md](..
 
 ### 配置
 
-### 新建配置文件
-
 执行命令 `tempbk -info`, 可以看到 `[tempbk config]` 的具体位置,
 请使用文本编辑器打开 `tempbk_config.toml` 文件, 可以看到内容如下:
 
@@ -75,8 +73,7 @@ bucket = '<bucket-name>'
 - `tempbk -u FILE` 等同于 `tempbk upload FILE`
 - 上传文件体积上限默认 50MB, 防止不小心上传太大的文件.
 - 使用命令 `tempbk -info` 可以查看上传文件体积上限.
-- 可以自定义上传文件体积上限, 例如 `tempbk --set-size 25`
-  将上限设为 25MB
+- 可以自定义上传文件体积上限, 例如 `tempbk --set-size 25` 将上限设为 25MB
 
 ### 自动选择一个最新文件
 
@@ -114,7 +111,7 @@ bucket = '<bucket-name>'
 ## 下载文件
 
 - `tempbk download 20221111/abc.txt --save-as /path/to/cde.txt`
-  下载文件保存到指定的文件夹及文件名
+  下载指定前缀的文件保存到指定的文件夹及文件名
 - 另外可以在下载前指定保存文件的文件夹, 例如:
   `tempbk download -dir /path/to/folder`  
   只需要设置一次, 后续使用命令 `tempbk download 20221111/abc.txt`
@@ -132,7 +129,13 @@ bucket = '<bucket-name>'
 - 在上面的命令中, 如果输入参数不是 `true`, `1`, `on`, 而是其它任何文字,
   则会设置为不使用代理.
 - 默认代理地址是 `http://127.0.0.1:1081`, 可通过命令 `tempbk -info`
-  找到 boto3 config 文件的位置, 用文本编辑器打开它, 修改 http proxy.
+  找到 tempbk config 文件的位置, 用文本编辑器打开它, 修改 http proxy.
+
+## 加密功能
+
+另外有一个有加密功能的版本: [tbk](https://github.com/ahui2016/py-scripts)
+
+tbk 与 tempbk 的功能几乎一模一样, 主要是加密与不加密的区别.
 
 ## TODO
 

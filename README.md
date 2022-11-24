@@ -78,7 +78,7 @@ $ conda activate py310
 可以通过以下其中一种方式下载代码:
 
 1. 最新代码 <https://github.com/ahui2016/py-scripts/archive/refs/heads/main.zip>
-2. 指定版本的代码 <https://github.com/ahui2016/py-scripts/releases/latest>
+2. 指定版本的代码 <https://github.com/ahui2016/py-scripts/releases/>
 
 解压缩后, 进入项目根目录 (有 setup.cfg 的文件夹).
 

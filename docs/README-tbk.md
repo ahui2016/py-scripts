@@ -154,3 +154,14 @@ tbk 与 tempbk 的功能几乎一模一样, 主要是加密与不加密的区别
   则会设置为不使用代理.
 - 默认代理地址是 `http://127.0.0.1:1081`, 可通过命令 `tbk -info`
   找到 tbk config 文件的位置, 用文本编辑器打开它, 修改 http proxy.
+
+## 与 Fav 搭配使用
+
+Fav 是一个命令行收藏夹, 主要用于收藏文件/文件夹路径.
+
+如果你有一些文件需要经常备份, 可以将其文件路径保存到 Fav 中, 然后用
+`tbk -u $(fav 1)` 的方式上传文件, 其中 fav 后面的数字是 fav 中的
+已登记文件路径的序号.
+
+关于 Fav 的安装与使用:
+[py-scripts/blob/main/docs/README-fav.md](https://github.com/ahui2016/py-scripts/blob/main/docs/README-fav.md)

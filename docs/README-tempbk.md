@@ -10,7 +10,7 @@ Temp Backup: 临时备份文件到 Cloudflare R2
 
 ## 准备工作
 
-### 注册 Cloudflare R2
+### 开通 Cloudflare R2
 
 1. 注册账户 <https://www.cloudflare.com/>
 2. 启用 R2 服务 <https://developers.cloudflare.com/r2/get-started/>  
@@ -31,7 +31,7 @@ Temp Backup: 临时备份文件到 Cloudflare R2
 3. 点击 Create API Token, 权限选择 Edit, 再点击右下角的 Create API
    Token 按钮, 即可得到 Access Key ID 和 Secret Access Key
 
-**注意**:
+**注意**:  
 Access Key ID 和 Secret Access Key 只显示一次, 请立即复制保存
 (建议保存到密码管理器中)
 
@@ -58,7 +58,7 @@ tempbk 是 py-scripts 的一部分, 安装方法详见 [py-scripts/README.md](..
 endpoint_url = 'https://<accountid>.r2.cloudflarestorage.com'
 aws_access_key_id = '<access_key_id>'
 aws_secret_access_key = '<access_key_secret>'
-bucket = '<bucket-name>'
+bucket = '<bucket_name>'
 ```
 
 其中 `<accountid>` 等尖括号的位置要填写正确的值, 一共有 4 个值需要填写,

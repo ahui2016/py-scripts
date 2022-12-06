@@ -31,7 +31,7 @@ Temp Backup (secure): 加密并备份文件到 Cloudflare R2
 3. 点击 Create API Token, 权限选择 Edit, 再点击右下角的 Create API
    Token 按钮, 即可得到 Access Key ID 和 Secret Access Key
 
-**注意**:
+**注意**:  
 Access Key ID 和 Secret Access Key 只显示一次, 请立即复制保存
 (建议保存到密码管理器中)
 
@@ -58,7 +58,7 @@ tbk 是 py-scripts 的一部分, 安装方法详见 [py-scripts/README.md](../RE
 endpoint_url = 'https://<accountid>.r2.cloudflarestorage.com'
 aws_access_key_id = '<access_key_id>'
 aws_secret_access_key = '<access_key_secret>'
-bucket = '<bucket-name>'
+bucket = '<bucket_name>'
 secret_key = '28hfhw2ghg93tigh48ut......'
 ```
 

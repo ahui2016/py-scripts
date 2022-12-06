@@ -4,7 +4,7 @@ from scripts.config import app_config_dir
 from scripts.util import print_err, print_err_exist, clip_copy
 
 # 初始化
-VERSION = "2022-11-22"
+VERSION = "2022-12-06"
 Config_Filename = "fav_config.txt"
 Empty_Slot = ""
 
@@ -41,11 +41,12 @@ ensure_config_file(default_config)
 @click.command()
 @click.help_option("-h", "--help")
 @click.argument("n", type=int, required=False)
+@click.option("-nocp", is_flag=True, help="Do not copy to clipboard.")
 @click.option("-info", is_flag=True, help="Show information.")
 @click.option("-add", help="Add an item to the list.")
 @click.option("d", "-del", type=int, help="Delete an item form the list.")
 @click.pass_context
-def cli(ctx, n, info, add, d):
+def cli(ctx, n, nocp, info, add, d):
     """Fav: 一句话收藏夹, 主要用于收藏文件/文件夹路径
 
     詳細使用方法看這裡:
@@ -58,7 +59,8 @@ def cli(ctx, n, info, add, d):
         item, err = get_item(n-1, fav_list)
         print_err_exist(ctx, err)
         print(item, end='')
-        clip_copy(item)
+        if not nocp:
+            clip_copy(item)
         ctx.exit()
     if info:
         print()

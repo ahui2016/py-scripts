@@ -33,6 +33,8 @@ C:\User\XiaoMei\
 
 执行命令 `fav 2` 会在屏幕上打印 `https://example.com`, 同时复制到剪贴板.
 
+如果不想复制到剪贴板, 可以使用 '-nocp' 开关, 例如 `fav -nocp 2`
+
 执行命令 `vim $(fav 3)` 相当于执行 `vim C:\User\XiaoMei\abc.txt`
 
 执行命令 `fav -del 2` 可以删除第 2 行, 结果变成:

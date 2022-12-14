@@ -79,7 +79,7 @@ bucket = '<bucket_name>'
 
 - 使用命令 `tempbk upload FOLDER` (其中 FOLDER 是一个文件夹)
   可以自动选择该文件夹中的一个最新文件 (以最近修改时间为准),
-  按回车键上传, 输入 n 回车取消.
+  按回车键确认上传, 输入 n 回车取消.
 - 例如 `tempbk upload .` 上传当前文件夹内的最新文件.
 - `tempbk -u FOLDER` 等同于 `tempbk upload FOLDER`
 
